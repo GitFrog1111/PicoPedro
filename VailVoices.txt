@@ -1,0 +1,31 @@
+Voices
+
+Young girl, cute
+https://elevenlabs.io/app/voice-library?voiceId=cYctNG9CmLHHErrIh5s7
+
+evil woman
+https://elevenlabs.io/app/voice-library?voiceId=fgDJOgmENIR82PueQrVs
+
+woman knight, strong, commoner
+https://elevenlabs.io/app/voice-library?voiceId=si0svtk05vPEuvwAW93c
+
+wise old man
+https://elevenlabs.io/app/voice-library?voiceId=6sFKzaJr574YWVu4UuJF
+
+wise old man 2
+https://elevenlabs.io/app/voice-library?voiceId=BBfN7Spa3cqLPH1xAS22
+
+strong male knight, soldier
+https://elevenlabs.io/app/voice-library?voiceId=goT3UYdM9bhm0n2lmKQx
+
+strong male leader
+https://elevenlabs.io/app/voice-library?voiceId=NNl6r8mD7vthiJatiJt1
+
+strong male villain
+https://elevenlabs.io/app/voice-library?voiceId=dG7SBJDxDoZkQUrwvqrD
+
+jester, tourguide, the fool, male
+https://elevenlabs.io/app/voice-library?voiceId=WAixHs5LYSwPVDJxQgN7
+
+Hearty commoner from the north, male
+https://elevenlabs.io/app/voice-library?voiceId=V4aTMuwwYUtBD7ZqVvZs

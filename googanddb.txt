@@ -1,0 +1,19 @@
+client id: 482510803953-9i2ds1trma1cgq3mvb441vj7i5p30q4t.apps.googleusercontent.com
+
+client secret: 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
+
+
+db
+uuid
+profile picture
+name
+email
+eggs
+nativelang
+Targetlang
+login_times[]
+real_location
+metrics[convohistory, eggsBought, eggsSpent, characterstalkedto, placesvisited, ]
+
+
+

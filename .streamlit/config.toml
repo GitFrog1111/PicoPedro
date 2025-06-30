@@ -1,0 +1,13 @@
+[theme] 
+primaryColor="#9D4EDD"
+backgroundColor="#FFFFFF"
+secondaryBackgroundColor="#F0F2F6"
+textColor="#25274B"
+
+
+[client]
+toolbarMode = "minimal"
+
+
+[server]
+enableStaticServing = true

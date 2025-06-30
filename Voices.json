@@ -1,0 +1,26 @@
+{
+    "German": {
+        "0": ["Christian Plasa", "warm and rounded, professional voice, Male, 30yo", "NBqeXKdZHweef6y0B67V"],
+        "1": ["Anton", "warm and rounded, professional voice, Male, 30yo", "Ay1WwRHxUsu3hEeAp8JZ"],
+        "2": ["Martin", "deep, warm, and professional male voice", "s1TxC2vO0GyTuonQQhm4"],
+        "3": ["Tommy Pro", "calm North German voice without dialect", "iNmg5TuXskrU3jUtYXW5"],
+        "4": ["Elias", "radio host and news presenter voice, young male", "1h6gHcRvQugDNZgdAo9N"],
+        "5": ["Lucy Fennek", "professional youthful German conversational voice", "KXxZd16DiBqt82nbarJx"],
+        "6": ["Sissi", "premium Austrian female voice", "Nzx4EODwcRtz5xESEixO"],
+        "7": ["Mila", "female, 20s-30s, opinionated and confident, yet soft", "dCnu06FiOZma2KVNUoPZ"],
+        "8": ["Emilia", "young, charming German female voice with standard accent", "ghgFyr7gmpr57xyTgX9q"],
+        "9": ["Ava", "youthful and well-spoken female German voice", "AnvlJBAqSLDzEevYr9Ap"]
+    },
+    "French": {
+        "0": ["Christian Plasa", "warm and rounded, professional voice, Male, 30yo", "NBqeXKdZHweef6y0B67V"],
+        "1": ["Anton", "warm and rounded, professional voice, Male, 30yo", "Ay1WwRHxUsu3hEeAp8JZ"],
+        "2": ["Martin", "deep, warm, and professional male voice", "s1TxC2vO0GyTuonQQhm4"],
+        "3": ["Tommy Pro", "calm North German voice without dialect", "iNmg5TuXskrU3jUtYXW5"],
+        "4": ["Elias", "radio host and news presenter voice, young male", "1h6gHcRvQugDNZgdAo9N"],
+        "5": ["Lucy Fennek", "professional youthful German conversational voice", "KXxZd16DiBqt82nbarJx"],
+        "6": ["Sissi", "premium Austrian female voice", "Nzx4EODwcRtz5xESEixO"],
+        "7": ["Mila", "female, 20s-30s, opinionated and confident, yet soft", "dCnu06FiOZma2KVNUoPZ"],
+        "8": ["Emilia", "young, charming German female voice with standard accent", "ghgFyr7gmpr57xyTgX9q"],
+        "9": ["Ava", "youthful and well-spoken female German voice", "AnvlJBAqSLDzEevYr9Ap"]
+    }
+}
