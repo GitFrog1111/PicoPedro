@@ -1,17 +1,31 @@
-streamlit>=1.44.1
-st_clickable_images>=0.0.3
-streamlit-extras>=0.3.5
-openai==1.3.0
-httpx==0.24.1
+# Core Streamlit and UI components
+streamlit>=1.37.0
+streamlit-extras>=0.4.0
 streamlit-image-coordinates>=0.1.6
-plotly>=5.17.0
-pandas>=2.1.3
-streamlit-card>=0.0.61
+streamlit-card>=1.0.0
 st-dialog-close-detector>=0.1.0
-elevenlabs>=0.2.26
-python-dotenv>=1.0.0
+streamlit-js-eval>=0.1.7
+
+# Data processing and visualization
+pandas>=2.1.0
+plotly>=5.17.0
+
+# AI and API clients
+openai>=1.35.0
+elevenlabs>=1.0.0
 fal-client>=0.7.0
-requests>=2.31.0
+
+# Authentication and payments
 st-paywall>=1.0.1
-streamlit-authenticator>=0.2.3
+streamlit-authenticator>=0.3.0
+
+# Image processing
 Pillow>=10.1.0
+
+# Audio processing
+pygame>=2.5.0
+
+# HTTP and utilities
+requests>=2.31.0
+httpx>=0.25.0
+python-dotenv>=1.0.0
