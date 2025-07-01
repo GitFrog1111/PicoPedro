@@ -764,15 +764,14 @@ def text_to_speech_file(text: str, voice_id: str = "WAixHs5LYSwPVDJxQgN7") -> st
     # uncomment the line below to play the audio back
     # play(response)
     # Generating a unique file name for the output MP3 file
-    # save_file_path = f"static/voiceline/Speech.mp3"
-    # # Writing the audio to a file
-    # with open(save_file_path, "wb") as f:
-    #     for chunk in response:
-    #         if chunk:
-    #             f.write(chunk)
-    # print(f"{save_file_path}: A new audio file was saved successfully!")
-    # # Return the path of the saved audio file
-    return response
+    save_file_path = f"static/voiceline/Speech.mp3"
+    # Writing the audio to a file
+    with open(save_file_path, "wb") as f:
+        for chunk in response:
+            if chunk:
+                f.write(chunk)
+    print(f"{save_file_path}: A new audio file was saved successfully!")
+    # Return the path of the saved audio file
     return f"https://picopedro.streamlit.app/{save_file_path}"
 
 
@@ -2252,7 +2251,7 @@ def LoaderHint():
             with open("LoadingHints/DidYouKnows.txt", "r", encoding='utf-8') as didyouknowsfile:
                 bigread = didyouknowsfile.read()
                 
-            print('bigread:', bigread)
+            #print('bigread:', bigread)
             didyouknowsfile.close()
             DidYouKnows = []
             for line in bigread.split("\n"):
