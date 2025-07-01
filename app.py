@@ -415,7 +415,7 @@ def new_poi(tool):
         
         #Image = fal(f'2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel, 3d rendering. detailed and varied, asymmetrical. organic shapes, point of interest: {poi_name}. {poi_prompt}')
         #Image = fal_poi(f"point of interest:{poi_name}, isometric point of interest, detailed map tile, pixel art, medieval rpg pixel art game, moody, cinematic, gritty, {poi_prompt}")
-        Image = fal_poi_LOW(f"point of interest:{poi_name}, {st.session_state.player['LearningLanguage']} isometric point of interest, detailed map tile, pixel art, pixel art game, moody, cinematic, gritty, {poi_prompt}, 2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel. detailed and varied, asymmetrical.")
+        Image = fal_poi(f"point of interest:{poi_name}, {st.session_state.player['LearningLanguage']} isometric point of interest, detailed map tile, pixel art, pixel art game, moody, cinematic, gritty, {poi_prompt}, 2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel. detailed and varied, asymmetrical.")
 
         #2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel, 3d rendering. detailed and varied, asymmetrical.
         #Image = 'CityGates.png'
@@ -510,7 +510,7 @@ def new_item(tool):
         st.session_state.NotiBuffer.append([f"🎒 New Item: {item_name}", "inventory3.mp3"])
         #st.toast(f"🎒 New Item: {item_name}")
         img = 'CityGates.png'
-        img = fal_icon_LOW(f'PixArFK style, a single {item_name}, white background, game item icon, pixel art.')
+        img = fal_icon(f'PixArFK style, a single {item_name}, white background, game item icon, pixel art.')
         #st.success(f"💰 New Item Created: Name='{item_name}', Description='{item_description}', Image Prompt='{item_image_prompt}'")
         st.session_state.inventory.append({"name": item_name, "description": item_description, "image": img})
 
