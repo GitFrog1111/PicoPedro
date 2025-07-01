@@ -40,8 +40,8 @@ client = OpenAI(api_key=openai_api_key)
 
 Currencylookup = json.load(open("Currencylookup.json", encoding="utf-8"))
 
-#BaseUrl = "https://picopedro.streamlit.app/app/static/"
-BaseUrl = "http://localhost:8501/app/static/"
+BaseUrl = "app/static/"
+#BaseUrl = "http://localhost:8501/app/static/"
 
 # Initialize isLoading at the top
 if "isLoading" not in st.session_state:
@@ -1207,7 +1207,7 @@ def Tutor_chat():
         
     imagecols = st.columns([2, 1, 2])
     with imagecols[1]:
-        st.image(f"{BaseUrl}tutorgif.gif", use_container_width=True)
+        st.image(f"static/tutorgif.gif", use_container_width=True)
     st.markdown("<p style='text-align: center; color: grey; margin-top: -12px;'>Pocket Tutor</p>", unsafe_allow_html=True)
     
     chat_container = st.container(border=True, height=300)
@@ -2207,7 +2207,7 @@ def SoundPlayer():
             with player:
                 with st.container(border=False, height=1):
                     st.container(border=False, height=10)
-                    st.audio(f"{BaseUrl}sounds/{sound}", format="audio/mp3", autoplay=True)
+                    st.audio(f"static/sounds/{sound}", format="audio/mp3", autoplay=True)
                 
                 
                 
