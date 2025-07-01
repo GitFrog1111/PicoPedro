@@ -954,7 +954,7 @@ def Fakestream(text):
 def speechtotext(recording):
     from openai import OpenAI
 
-    client = OpenAI()
+    client = OpenAI(api_key=openai_api_key)
     audio_file= recording
 
     transcription = client.audio.transcriptions.create(
@@ -1238,7 +1238,7 @@ def Tutor_chat():
             with st.chat_message("you", avatar=st.session_state.player['Avatar']):
                 st.markdown(prompt)
 
-        client = OpenAI(api_key=st.secrets["openai"]["api_key"])
+        client = OpenAI(api_key=openai_api_key)
         with chat_container:
             with st.chat_message("assistant", avatar="✨"):
                 stream = client.chat.completions.create(
