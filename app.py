@@ -23,6 +23,7 @@ import fal_client
 import requests
 import json
 import math
+import os
 
 from streamlit_js_eval import streamlit_js_eval
 
@@ -30,7 +31,9 @@ elevenlabs = ElevenLabs(
   api_key=st.secrets['elevenLabs']['api_key'],
 )
 
-FAL_KEY=st.secrets['falAi']['FAL_KEY']
+#FAL_KEY=st.secrets['falAi']['FAL_KEY']
+os.environ['FAL_KEY'] = st.secrets['falAi']['FAL_KEY']
+
 
 openai_api_key = st.secrets['openai']['api_key']
 client = OpenAI(api_key=openai_api_key)
