@@ -2055,7 +2055,7 @@ def renderMainUI():
         # st.container(border=False, height=10)
         #st.markdown(f"<b><h5 style='text-align: center; color: black;'>{st.session_state.POI['Name']}</h5></b>", unsafe_allow_html=True)
         #st.container(border=False, height=5)
-        st.markdown(f""" <img src='static/PicoLogo.png' style="width: 15%; height: 15%; margin-top: -120px; display: block; margin-left: auto; margin-right: auto;"> """, unsafe_allow_html=True)
+        st.markdown(f""" <img src='app/static/PicoLogo.png' style="width: 15%; height: 15%; margin-top: -120px; display: block; margin-left: auto; margin-right: auto;"> """, unsafe_allow_html=True)
         st.markdown(f"<b><h5 style='text-align: center; color: black; margin-top: -50px; margin-left: 20px;'>{st.session_state.POI['Name']}</h5></b>", unsafe_allow_html=True)
         st.session_state.POI['Empty'] = st.empty()
         
