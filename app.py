@@ -23,10 +23,9 @@ import fal_client
 import requests
 import json
 import math
-from pygame import mixer
+
 from streamlit_js_eval import streamlit_js_eval
 
-#load_dotenv()
 elevenlabs = ElevenLabs(
   api_key=st.secrets['elevenLabs']['api_key'],
 )
@@ -37,6 +36,9 @@ openai_api_key = st.secrets['openai']['api_key']
 client = OpenAI(api_key=openai_api_key)
 
 Currencylookup = json.load(open("Currencylookup.json", encoding="utf-8"))
+
+BaseUrl = "https://picopedro.streamlit.app/app/static/"
+#BaseUrl = "http://localhost:8501/app/static/"
 
 # Initialize isLoading at the top
 if "isLoading" not in st.session_state:
@@ -114,11 +116,6 @@ def purchase(Selection):
     st.success('test')
 
 def Main():
-    #init sounds
-
-    mixer.pre_init()
-    mixer.init()
-    mixer.set_num_channels(32)
     #SessionState
 
     if "UserBox" not in st.session_state:
@@ -203,8 +200,10 @@ def Main():
 
 
 
+
     with st.container(border=False):
         renderMainUI()
+
 
     if "Conversation" not in st.session_state:
         st.session_state.Conversation = [
@@ -224,19 +223,20 @@ def Main():
     #st.session_state.Conversation
     FAQ()
 
+    SoundPlayer()
 
-    Toolbuffer()
-    NotiBuffer()
 
     if st.session_state.Prompt:
         character_to_chat = ProcessCommand(st.session_state.Prompt)
         st.session_state.Prompt = None
-        st.session_state.isLoading = False
+        #st.session_state.isLoading = False
         if character_to_chat:
             character_chat(character_to_chat)
         else:
             st.rerun()
-
+    
+    Toolbuffer()
+    
     # After initial loading and AI calls are done:
     if st.session_state.isLoading: # If true (typically after initial setup and AI calls)
         st.session_state.isLoading = False
@@ -245,20 +245,18 @@ def Main():
 
 
 def Toolbuffer():
-    print('running toolbuffer')
-    if st.session_state.get('ModalOpen', False):
-        return # Don't process buffer while a modal is open
+    print(f'{time.time()} running toolbuffer: \n', st.session_state.toolbuffer)
+    # if st.session_state.get('ModalOpen', False):
+    #     return # Don't process buffer while a modal is open
+    
 
     if len(st.session_state.toolbuffer) > 0:
         st.session_state.isLoading = True
         
-        tools_to_process = st.session_state.toolbuffer[:]
-        st.session_state.toolbuffer.clear()
-        print('toolbuffer: ', tools_to_process)
-        for tool in tools_to_process:
+        for tool in st.session_state.toolbuffer:
             st.session_state.isLoading = True
             try:
-                print('executing tool: ', tool)
+                print('\nexecuting tool: ', tool)
                 # `handle_tools` is responsible for opening chats.
                 # If a `message_as_character` tool is in the buffer, it's likely because the modal was open
                 # or the character didn't exist. We'll skip it here to avoid unexpected behavior.
@@ -269,13 +267,18 @@ def Toolbuffer():
 
                 dispatch_tool(tool)
                 #st.success(f"🛴 tool: {tool['name']}")
+                st.session_state.toolbuffer.remove(tool)
                 
             except Exception as e:
-                st.warning(f"Skipping buffered tool: {tool}")
-                st.error(f"Error executing tool: {e}")
+                
+                print(f'{time.time()} error executing tool: {e}')
+                st.session_state.toolbuffer.remove(tool)
                 continue
-        st.session_state.isLoading = False
-        st.rerun()
+
+            if len(st.session_state.toolbuffer) == 0:
+                NotiBuffer()
+                st.session_state.isLoading = False
+                st.rerun()
 
 
 def NotiBuffer():
@@ -412,7 +415,7 @@ def new_poi(tool):
         
         #Image = fal(f'2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel, 3d rendering. detailed and varied, asymmetrical. organic shapes, point of interest: {poi_name}. {poi_prompt}')
         #Image = fal_poi(f"point of interest:{poi_name}, isometric point of interest, detailed map tile, pixel art, medieval rpg pixel art game, moody, cinematic, gritty, {poi_prompt}")
-        Image = fal_poi(f"point of interest:{poi_name}, {st.session_state.player['LearningLanguage']} isometric point of interest, detailed map tile, pixel art, pixel art game, moody, cinematic, gritty, {poi_prompt}, 2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel. detailed and varied, asymmetrical.")
+        Image = fal_poi_LOW(f"point of interest:{poi_name}, {st.session_state.player['LearningLanguage']} isometric point of interest, detailed map tile, pixel art, pixel art game, moody, cinematic, gritty, {poi_prompt}, 2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel. detailed and varied, asymmetrical.")
 
         #2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel, 3d rendering. detailed and varied, asymmetrical.
         #Image = 'CityGates.png'
@@ -507,7 +510,7 @@ def new_item(tool):
         st.session_state.NotiBuffer.append([f"🎒 New Item: {item_name}", "inventory3.mp3"])
         #st.toast(f"🎒 New Item: {item_name}")
         img = 'CityGates.png'
-        img = fal_icon(f'PixArFK style, a single {item_name}, white background, game item icon, pixel art.')
+        img = fal_icon_LOW(f'PixArFK style, a single {item_name}, white background, game item icon, pixel art.')
         #st.success(f"💰 New Item Created: Name='{item_name}', Description='{item_description}', Image Prompt='{item_image_prompt}'")
         st.session_state.inventory.append({"name": item_name, "description": item_description, "image": img})
 
@@ -538,7 +541,7 @@ def new_character(tool):
             character_voice_id = "WAixHs5LYSwPVDJxQgN7"
 
         print('character_voice_id: ', character_voice_id)
-        Image = fal_icon(f'PixArFK style, portrait of {character_name}, {character_description}, {character_traits}, game character icon, pixel art, shoulders-up shot, 3/4 view, jrpg style character icon of a {st.session_state.player["LearningLanguage"]} person')
+        Image = fal_icon(f'PixArFK style, portrait of {character_name}, {character_description}, detailed background, game character icon, pixel art, shoulders-up shot, 3/4 view, jrpg style character icon of a {st.session_state.player["LearningLanguage"]} person')
         st.session_state.characters.append({"name": character_name, "description": character_description, "traits": character_traits, "image": Image, 'convoHistory': [], "POI": st.session_state.POI['Name'], "is_following": False, "voice_id": character_voice_id})
         # character_chat(st.session_state.characters[-1])
         
@@ -679,7 +682,7 @@ def on_queue_update(update):
 
 
 def fal_icon_LOW(prompt):
-    return 'http://localhost:8501/app/static/placeholders/Dog.png'
+    return f'{BaseUrl}placeholders/Dog.png'
 def fal_icon(prompt):
     
     #fal-ai/hidream-i1-full
@@ -690,7 +693,7 @@ def fal_icon(prompt):
         "prompt": prompt,
         "negative_prompt": "two, 2, multiple, duplicate, spritesheet, seamless, seamless texture, repetition, Text, label, words, title, caption, border, voxel, 3d, dark border, bland, flat color background",
         "loras": [{"path": 'https://civitai.com/api/download/models/160844?type=Model&format=SafeTensor', "scale": 1.0}],
-        "num_inference_steps": 20,
+        "num_inference_steps": 14,
         "guidance_scale": 6,
         "num_images": 1,
         "enable_safety_checker": True,
@@ -706,7 +709,7 @@ def fal_icon(prompt):
     return result['images'][0]['url']
 
 def fal_poi_LOW(prompt):
-    return 'http://localhost:8501/app/static/placeholders/CityGates.png'
+    return f'{BaseUrl}placeholders/CityGates.png'
 def fal_poi(prompt):
     #fal-ai/hidream-i1-full
     #fal-ai/imagen4/preview
@@ -1089,7 +1092,7 @@ def character_chat(Character):
     # Chat input field
     #user_input = st.chat_input('Your message...', key=f'chat_input_{chat_input_key_suffix}', disabled=st.session_state.isLoading)
 
-    UserAudioInput = st.audio_input(f"Speak to {Character.get('name', 'an unnamed character')}...", key=f'audio_input_{chat_input_key_suffix}', disabled=st.session_state.isLoading)
+    UserAudioInput = st.audio_input(f"Speak to {Character.get('name', 'an unnamed character')}...", key=f'audio_input_{chat_input_key_suffix}')
     
         #UserMessageText = Stt(UserInput)
         #response = ai(UserMessageText)
@@ -1200,7 +1203,7 @@ def Tutor_chat():
         
     imagecols = st.columns([2, 1, 2])
     with imagecols[1]:
-        st.image("http://localhost:8501/app/static/tutorgif.gif", use_container_width=True)
+        st.image(f"{BaseUrl}tutorgif.gif", use_container_width=True)
     st.markdown("<p style='text-align: center; color: grey; margin-top: -12px;'>Pocket Tutor</p>", unsafe_allow_html=True)
     
     chat_container = st.container(border=True, height=300)
@@ -1520,21 +1523,21 @@ def AccountModal():
             st.container(border=False, height=1)
             st.link_button("Manage", icon = ":material/open_in_new:", url = "https://billing.stripe.com/p/login/test_fZucN51FVfbi06H1OG4c800", use_container_width=True, disabled= not st.session_state.player['IsSubscribed'], type = "secondary")
         #Pedropremium image
-        st.markdown(f"<img src='http://localhost:8501/app/static/PedroPremium.png' style='width: 100%; height: 100%; border-radius: 8px; border: 0px solid #E8EAF1;'>", unsafe_allow_html=True)
+        st.markdown(f"<img src='{BaseUrl}PedroPremium.png' style='width: 100%; height: 100%; border-radius: 8px; border: 0px solid #E8EAF1;'>", unsafe_allow_html=True)
         st.container(border=False, height=1)
     
     with st.container(border=True):
         GoogleChipColumns = st.columns([1, 5, 1])
         with GoogleChipColumns[0]:
             st.image(st.user.picture)
-            #st.markdown(f"<img src='http://localhost:8501/app/static/GoogleLogoStatic.png' style='width: 20px; height: 20px;'>", unsafe_allow_html=True)
+            #st.markdown(f"<img src='f'{BaseUrl}GoogleLogoStatic.png' style='width: 20px; height: 20px;'>", unsafe_allow_html=True)
         with GoogleChipColumns[1]:
             st.write("Signed in with Google")
             st.markdown(f"<p style='text-align: left; margin-top: -20px; color: #7c7d93;'>{st.user.email}</p>", unsafe_allow_html=True)
         with GoogleChipColumns[2]:
-            #st.image("http://localhost:8501/app/static/GoogleLogoStatic.png")
+            #st.image("f'{BaseUrl}GoogleLogoStatic.png")
             st.container(border=False, height=1)
-            st.markdown(f"<img src='http://localhost:8501/app/static/GoogleLogoStatic.png' style='width: 20px; height: 20px; margin-left: 20px; margin-top: -10px;'>", unsafe_allow_html=True)
+            st.markdown(f"<img src='{BaseUrl}GoogleLogoStatic.png' style='width: 20px; height: 20px; margin-left: 20px; margin-top: -10px;'>", unsafe_allow_html=True)
         if st.button("Logout", icon=":material/logout:", key="LogoutBut", use_container_width=True, type="secondary", disabled=st.session_state.isLoading):
             st.logout()
             st.rerun()
@@ -1937,101 +1940,101 @@ def renderMainUI():
 
 
     # Characters
-    if st.session_state.isLoading == False:
-        with col1:
-            st.container(border=False, height=60)
+    with col1:
+        with st.container(border=False):
+            #Vertical spacing
+            c1, c2, c3 = st.columns(3)
+            counter = 0
             
-            with st.container(border=False, height=400):
-                #Vertical spacing
-                c1, c2, c3 = st.columns(3)
-                counter = 0
+            for character in st.session_state.characters:
+                is_at_current_poi = character['POI'] == st.session_state.POI['Name']
+                is_following_player = character.get('is_following', False)
+
+                if not (is_at_current_poi or is_following_player):
+                    continue
+
                 
-                for character in st.session_state.characters:
-                    is_at_current_poi = character['POI'] == st.session_state.POI['Name']
-                    is_following_player = character.get('is_following', False)
+                
+                # Define common elements for the character button
+                character_name = character['name']
+                character_image_url = character['image']
+                
+                # Prepare CSS for the stylable container
+                # Using f-string to dynamically set the background image
+                # Properties are taken from the provided example
+                css_styles = f"""
+                    button {{
+                        background-image: url('{character_image_url}');
+                        background-size: cover;
+                        background-position: center;
+                        color: transparent; /* To hide any button text, as label is empty */
+                        border-radius: 20px;
+                        width: 100px;
+                        height: 152px;
+                        margin-left: auto; /* Horizontally center the button in its column cell */
+                        margin-right: auto;
+                        display: block; /* Necessary for margin: auto to work for block elements */
+                    }}
+                """
+                
+                # Define the action for the button click
+                # Assuming character_chat function exists and expects the character's name as a string argument
+                # as per the example: args=("Melvin",)
+                on_click_action = character_chat
+                click_args = (character,) # Pass the whole character dictionary
+                
+                # Generate unique keys for the container and button using name and counter
+                container_key = f"{character_name}_{counter}_Container"
+                button_key = f"{character_name}_{counter}_Key"
 
-                    if not (is_at_current_poi or is_following_player):
-                        continue
-
-                    
-                    
-                    # Define common elements for the character button
-                    character_name = character['name']
-                    character_image_url = character['image']
-                    
-                    # Prepare CSS for the stylable container
-                    # Using f-string to dynamically set the background image
-                    # Properties are taken from the provided example
-                    css_styles = f"""
-                        button {{
-                            background-image: url('{character_image_url}');
-                            background-size: cover;
-                            background-position: center;
-                            color: transparent; /* To hide any button text, as label is empty */
-                            border-radius: 20px;
-                            width: 100px;
-                            height: 152px;
-                            margin-left: auto; /* Horizontally center the button in its column cell */
-                            margin-right: auto;
-                            display: block; /* Necessary for margin: auto to work for block elements */
-                        }}
-                    """
-                    
-                    # Define the action for the button click
-                    # Assuming character_chat function exists and expects the character's name as a string argument
-                    # as per the example: args=("Melvin",)
-                    on_click_action = character_chat
-                    click_args = (character,) # Pass the whole character dictionary
-                    
-                    # Generate unique keys for the container and button using name and counter
-                    container_key = f"{character_name}_{counter}_Container"
-                    button_key = f"{character_name}_{counter}_Key"
-
-                    # Place the character button and caption in the appropriate column
-                    if counter % 3 == 0:
-                        with c1:
-                            with stylable_container(key=container_key, css_styles=css_styles):
-                                st.button(
-                                    label="", # Empty label as per example
-                                    on_click=on_click_action,
-                                    args=click_args,
-                                    key=button_key
-                                )
-                            # Display character name as a centered caption below the button
-                            st.markdown(
-                                f"<p style='text-align: center; margin-top: 2px;'>{character_name}</p>", 
-                                unsafe_allow_html=True
+                # Place the character button and caption in the appropriate column
+                if counter % 3 == 0:
+                    with c1:
+                        with stylable_container(key=container_key, css_styles=css_styles):
+                            st.button(
+                                label="", # Empty label as per example
+                                on_click=on_click_action,
+                                args=click_args,
+                                key=button_key,
+                                disabled=st.session_state.isLoading
                             )
-                            
-                    elif counter % 3 == 1:
-                        with c2:
-                            with stylable_container(key=container_key, css_styles=css_styles):
-                                st.button(
-                                    label="", 
-                                    on_click=on_click_action,
-                                    args=click_args,
-                                    key=button_key
-                                )
-                            st.markdown(
-                                f"<p style='text-align: center; margin-top: 2px;'>{character_name}</p>", 
-                                unsafe_allow_html=True
+                        # Display character name as a centered caption below the button
+                        st.markdown(
+                            f"<p style='text-align: center; margin-top: 2px;'>{character_name}</p>", 
+                            unsafe_allow_html=True
+                        )
+                        
+                elif counter % 3 == 1:
+                    with c2:
+                        with stylable_container(key=container_key, css_styles=css_styles):
+                            st.button(
+                                label="", 
+                                on_click=on_click_action,
+                                args=click_args,
+                                key=button_key,
+                                disabled=st.session_state.isLoading
                             )
-                            
-                    elif counter % 3 == 2:
-                        with c3:
-                            with stylable_container(key=container_key, css_styles=css_styles):
-                                st.button(
-                                    label="",
-                                    on_click=on_click_action,
-                                    args=click_args,
-                                    key=button_key
-                                )
-                            st.markdown(
-                                f"<p style='text-align: center; margin-top: 2px;'>{character_name}</p>", 
-                                unsafe_allow_html=True
+                        st.markdown(
+                            f"<p style='text-align: center; margin-top: 2px;'>{character_name}</p>", 
+                            unsafe_allow_html=True
+                        )
+                        
+                elif counter % 3 == 2:
+                    with c3:
+                        with stylable_container(key=container_key, css_styles=css_styles):
+                            st.button(
+                                label="",
+                                on_click=on_click_action,
+                                args=click_args,
+                                key=button_key,
+                                disabled=st.session_state.isLoading
                             )
-                    counter +=1
-            
+                        st.markdown(
+                            f"<p style='text-align: center; margin-top: 2px;'>{character_name}</p>", 
+                            unsafe_allow_html=True
+                        )
+                counter +=1
+        
 
 
     # POI Image
@@ -2039,7 +2042,7 @@ def renderMainUI():
         # st.container(border=False, height=10)
         #st.markdown(f"<b><h5 style='text-align: center; color: black;'>{st.session_state.POI['Name']}</h5></b>", unsafe_allow_html=True)
         #st.container(border=False, height=5)
-        st.markdown(""" <img src="http://localhost:8501/app/static/PicoLogo.png" style="width: 15%; height: 15%; margin-top: -120px; display: block; margin-left: auto; margin-right: auto;"> """, unsafe_allow_html=True)
+        st.markdown(f""" <img src="{BaseUrl}PicoLogo.png" style="width: 15%; height: 15%; margin-top: -120px; display: block; margin-left: auto; margin-right: auto;"> """, unsafe_allow_html=True)
         st.markdown(f"<b><h5 style='text-align: center; color: black; margin-top: -50px; margin-left: 20px;'>{st.session_state.POI['Name']}</h5></b>", unsafe_allow_html=True)
         st.session_state.POI['Empty'] = st.empty()
         
@@ -2116,7 +2119,7 @@ def renderMainUI():
         with bottombar[0]:
             css_styles = f"""
                 button {{
-                    background-image: url('http://localhost:8501/app/static/tutorgif.gif');
+                    background-image: url('{BaseUrl}tutorgif.gif');
                     background-size: cover;
                     background-position: center;
                     color: transparent; /* To hide any button text, as label is empty */
@@ -2130,6 +2133,7 @@ def renderMainUI():
                     padding: 0;
                     margin: 0;
                     outline: none;
+                    
 
                 }}
             """
@@ -2144,6 +2148,7 @@ def renderMainUI():
                     on_click=Tutor_chat_Sound,
                     args=(),
                     key="Tutor"
+                    
                 )
                 st.container(border=False, height=1)
     with bottombar[1]:
@@ -2173,19 +2178,50 @@ def TimeUntil(unix_timestamp):
     return time_difference
 
 
+if 'SoundBuffer' not in st.session_state:
+    st.session_state.SoundBuffer = []
+
+
+def SoundPlayer():
+    print('SoundPlayer: ', st.session_state.SoundBuffer)
+    if 'SoundPlayer' not in st.session_state:
+        player = st.empty()
+      
+    player.empty()
+    if st.session_state.SoundBuffer:
+        for i in range(len(st.session_state.SoundBuffer)):
+            sound = st.session_state.SoundBuffer.pop(0)
+            with player:
+                with st.container(border=False, height=1):
+                    st.container(border=False, height=10)
+                    st.audio(f"{BaseUrl}sounds/{sound}", format="audio/mp3", autoplay=True)
+                
+                
+                
+            
 
 def SoundEngine(sound):
-    time.sleep(1)
-    channel = mixer.find_channel()
-    if channel:
-        channel.set_volume(st.session_state.player['Volume']/100)
-        PlaySound = mixer.Sound(f"static/sounds/{sound}")
-        PlaySoundLength = PlaySound.get_length()*1000
-        channel.play(PlaySound)
-        channel.fadeout(int(PlaySoundLength))
+    st.session_state.SoundBuffer.append(sound)
+
+    # with st.session_state.SoundPlayer:
+    #     st.audio(f"{BaseUrl}sounds/{sound}", format="audio/mp3", autoplay=True)
+
         
-        if PlaySoundLength >= 2000:
-            channel.fadeout(int(PlaySoundLength)-2000)
+
+
+
+
+    # time.sleep(1)
+    # channel = mixer.find_channel()
+    # if channel:
+    #     channel.set_volume(st.session_state.player['Volume']/100)
+    #     PlaySound = mixer.Sound(f"static/sounds/{sound}")
+    #     PlaySoundLength = PlaySound.get_length()*1000
+    #     channel.play(PlaySound)
+    #     channel.fadeout(int(PlaySoundLength))
+        
+    #     if PlaySoundLength >= 2000:
+    #         channel.fadeout(int(PlaySoundLength)-2000)
 
     
 
@@ -2531,7 +2567,7 @@ if 'DifficultyOptions' not in st.session_state:
 #                 onboarding_data = st.session_state.onboarding_data
 #                 st.session_state.player = {
 #                     "Name": onboarding_data["name"],
-#                     "ProfilePicture": "http://localhost:8501/app/static/profilepictures/0.png",
+#                     "ProfilePicture": "f'{BaseUrl}profilepictures/0.png",
 #                     "NativeLanguage": user_native_lang,
 #                     "LearningLanguage": user_learning_lang,
 #                     "Eggs": 50,
