@@ -745,14 +745,14 @@ def fal_poi(prompt):
     return result['images'][0]['url']
 
 
-def text_to_speech_file(text: str, voice_id: str = "WAixHs5LYSwPVDJxQgN7") -> str:
-    # Calling the text_to_speech conversion API with detailed parameters
-    response = elevenlabs.text_to_speech.convert(
-        voice_id=voice_id, # Adam pre-made voice is the default
+
+
+def text_to_speech_bytes(text: str, voice_id: str="WAixHs5LYSwPVDJxQgN7") -> bytes:
+    chunks = elevenlabs.text_to_speech.convert(
+        voice_id=voice_id,
         output_format="mp3_22050_32",
         text=text,
-        model_id="eleven_turbo_v2_5", # use the turbo model for low latency
-        # Optional voice settings that allow you to customize the output
+        model_id="eleven_turbo_v2_5",
         voice_settings=VoiceSettings(
             stability=0.0,
             similarity_boost=1.0,
@@ -761,18 +761,7 @@ def text_to_speech_file(text: str, voice_id: str = "WAixHs5LYSwPVDJxQgN7") -> st
             speed=1.0,
         ),
     )
-    # uncomment the line below to play the audio back
-    # play(response)
-    # Generating a unique file name for the output MP3 file
-    save_file_path = f"static/voiceline/Speech.mp3"
-    # Writing the audio to a file
-    with open(save_file_path, "wb") as f:
-        for chunk in response:
-            if chunk:
-                f.write(chunk)
-    print(f"{save_file_path}: A new audio file was saved successfully!")
-    # Return the path of the saved audio file
-    return f"https://picopedro.streamlit.app/{save_file_path}"
+    return b"".join(chunks)  # <-- collect all chunks
 
 
 def AddUserContext():
@@ -1173,7 +1162,8 @@ def character_chat(Character):
 
         with Speaker:
             with st.container(border=False, height = 50):
-                st.audio(text_to_speech_file(text = str(ai_response), voice_id=Character.get('voice_id', '6CS8keYmkwxkspesdyA7')), autoplay=True)
+                mp3_bytes = text_to_speech_bytes(str(ai_response), Character.get('voice_id', '6CS8keYmkwxkspesdyA7'))
+                st.audio(mp3_bytes, format="audio/mp3", autoplay=True)
         # 6. Re-render to show AI's response
         
         render_current_messages()
