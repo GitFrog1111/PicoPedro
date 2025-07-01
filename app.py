@@ -2207,12 +2207,9 @@ def SoundPlayer():
             with player:
                 with st.container(border=False, height=1):
                     st.container(border=False, height=10)
-                    st.audio(f"static/sounds/{sound}", format="audio/mp3", autoplay=True)
+                    st.audio(f"app/static/sounds/{sound}", format="audio/mp3", autoplay=True)
                 
                 
-                
-            
-
 def SoundEngine(sound):
     st.session_state.SoundBuffer.append(sound)
 
