@@ -40,8 +40,8 @@ client = OpenAI(api_key=openai_api_key)
 
 Currencylookup = json.load(open("Currencylookup.json", encoding="utf-8"))
 
-BaseUrl = "https://picopedro.streamlit.app/app/static/"
-#BaseUrl = "http://localhost:8501/app/static/"
+#BaseUrl = "https://picopedro.streamlit.app/app/static/"
+BaseUrl = "http://localhost:8501/app/static/"
 
 # Initialize isLoading at the top
 if "isLoading" not in st.session_state:
@@ -169,7 +169,8 @@ def Main():
             "ProfilePicture": 1,
             "XP": 0,
             "Money": 2.50,
-            "Volume": 50
+            "Volume": 50,
+            "GameTheme": ''
         }
         
 
@@ -192,7 +193,7 @@ def Main():
 
 
     if "SystemPrompt" not in st.session_state:
-        st.session_state.SystemPrompt = open("VailSysPrompt.txt", "r", encoding='utf-8').read().format(NativeLanguage=st.session_state.player['NativeLanguage'], LearningLanguage=st.session_state.player['LearningLanguage'], AvailableVoices=build_string)
+        st.session_state.SystemPrompt = open("VailSysPrompt.txt", "r", encoding='utf-8').read().format(NativeLanguage=st.session_state.player['NativeLanguage'], LearningLanguage=st.session_state.player['LearningLanguage'], AvailableVoices=build_string, GameTheme=st.session_state.player['GameTheme'])
 
     if 'missionList' not in st.session_state:
         #missions look like this {"mission": 'Missions will appear here', "Reward": ' ', "active?": True}
@@ -1439,6 +1440,7 @@ def AccountModal():
                     st.session_state.player['LearningLanguage'] = Account['LearningLanguage']['value']
                     st.session_state.player['IsSubscribed'] = Account['IsSubscribed']
                     st.session_state.player['Volume'] = Account['Volume']
+                    st.session_state.player['GameTheme'] = Account.get('GameTheme', '')
                 
         Loader.empty()
 
@@ -1458,8 +1460,11 @@ def AccountModal():
         
         st.container(border=False, height=1)
         NewDifficulty = st.select_slider("Difficulty", options=st.session_state.DifficultyOptions, value=st.session_state.player['Difficulty'])
+        # st.markdown("<p style='text-align: center; color: grey; font-size: 12px;'>* Language changes will start a new game</p>", unsafe_allow_html=True)
+        
+        # Store old values to check for changes
+        OldGameTheme = st.session_state.player['GameTheme']
 
-        st.markdown("<p style='text-align: center; color: grey; font-size: 12px;'>* Language changes will start a new game</p>", unsafe_allow_html=True)
         #st.container(border=False, height=1)
         DataCols = st.columns([3, 1, 3])
         with DataCols[0]:
@@ -1472,6 +1477,8 @@ def AccountModal():
             st.caption("Gender:")
             st.container(border=False, height=4)
             st.caption("Volume:")
+            st.container(border=False, height=4)
+            st.caption("Game Theme:")
             st.container(border=False, height=4)
         
         with DataCols[2]:
@@ -1494,6 +1501,8 @@ def AccountModal():
             print("playyergender: ", st.session_state.player['Gender'])
             st.session_state.player['Gender'] = st.selectbox("Gender", options=GenderOptions, index=GenderOptions.index(st.session_state.player['Gender']), label_visibility="collapsed")
             st.session_state.player['Volume'] = st.slider("Volume", min_value=0, max_value=100, value=int(st.session_state.player['Volume']), label_visibility="collapsed")
+        
+        st.session_state.player['GameTheme'] = st.text_area("Game Theme", value=st.session_state.player['GameTheme'], placeholder="Describe the world you want to explore (e.g., 'Medieval fantasy kingdom', 'Modern Tokyo', 'Space station')...", label_visibility="collapsed", height=90)
 
         Submit = st.form_submit_button("Save Settings", icon = ":material/check:", type = "primary", use_container_width=True, disabled=st.session_state.isLoading)
         if Submit:
@@ -1505,10 +1514,11 @@ def AccountModal():
                 "Difficulty": NewDifficulty,
                 "NativeLanguage": NewNLang,
                 "LearningLanguage": NewLLang,
-                "Volume": st.session_state.player['Volume']
+                "Volume": st.session_state.player['Volume'],
+                "GameTheme": st.session_state.player['GameTheme']
             }
             BaserowDB("update Row", "Users", st.session_state.player['ID'], Data=data_to_update)
-            if st.session_state.player['NativeLanguage'] != NewNLang or st.session_state.player['LearningLanguage'] != NewLLang or st.session_state.player['Difficulty'] != NewDifficulty:
+            if st.session_state.player['NativeLanguage'] != NewNLang or st.session_state.player['LearningLanguage'] != NewLLang or st.session_state.player['Difficulty'] != NewDifficulty or OldGameTheme != st.session_state.player['GameTheme']:
                 st.session_state.player['NativeLanguage'] = NewNLang
                 st.session_state.player['LearningLanguage'] = NewLLang
                 st.session_state.player['Difficulty'] = NewDifficulty
@@ -2045,7 +2055,7 @@ def renderMainUI():
         # st.container(border=False, height=10)
         #st.markdown(f"<b><h5 style='text-align: center; color: black;'>{st.session_state.POI['Name']}</h5></b>", unsafe_allow_html=True)
         #st.container(border=False, height=5)
-        st.markdown(f""" <img src="{BaseUrl}PicoLogo.png" style="width: 15%; height: 15%; margin-top: -120px; display: block; margin-left: auto; margin-right: auto;"> """, unsafe_allow_html=True)
+        st.markdown(f""" <img src='static/PicoLogo.png' style="width: 15%; height: 15%; margin-top: -120px; display: block; margin-left: auto; margin-right: auto;"> """, unsafe_allow_html=True)
         st.markdown(f"<b><h5 style='text-align: center; color: black; margin-top: -50px; margin-left: 20px;'>{st.session_state.POI['Name']}</h5></b>", unsafe_allow_html=True)
         st.session_state.POI['Empty'] = st.empty()
         
@@ -2213,7 +2223,6 @@ def SoundEngine(sound):
 
 
 
-
     # time.sleep(1)
     # channel = mixer.find_channel()
     # if channel:
@@ -2315,7 +2324,8 @@ def Onboarding(id = None):
                     "Gender": user_gender,
                     "NativeLanguage": Nativelang,
                     "LearningLanguage": Learninglang,
-                    "Difficulty": Difficulty
+                    "Difficulty": Difficulty,
+                    "GameTheme": ""
                 })
 
                 st.session_state.player['Name'] = user_name
@@ -2323,6 +2333,7 @@ def Onboarding(id = None):
                 st.session_state.player['NativeLanguage'] = Nativelang
                 st.session_state.player['LearningLanguage'] = Learninglang
                 st.session_state.player['Difficulty'] = Difficulty
+                st.session_state.player['GameTheme'] = ""
                 st.session_state.isLoading = True
                 #st.rerun()
 
@@ -2415,7 +2426,8 @@ if st.user.is_logged_in:
                     'Difficulty': row['Difficulty'],
                     'XP': int(row['XP']) if 'XP' in row and row['XP'] is not None else 0,
                     'Money': float(row['Money']) if 'Money' in row and row['Money'] is not None else 2.50,
-                    'Volume': int(row['Volume']) if 'Volume' in row and row['Volume'] is not None else 50
+                    'Volume': int(row['Volume']) if 'Volume' in row and row['Volume'] is not None else 50,
+                    'GameTheme': str(row['GameTheme']) if 'GameTheme' in row and row['GameTheme'] is not None else ''
                 }
 
                 returning = True
@@ -2438,7 +2450,8 @@ if st.user.is_logged_in:
                 "Difficulty": "Beginner",
                 "XP": 0,
                 "Money": 2.50,
-                "Volume": 50
+                "Volume": 50,
+                "GameTheme": ""
             })
             getdb = BaserowDB("list rows", "Users")['results']
             for row in getdb:
@@ -2458,7 +2471,8 @@ if st.user.is_logged_in:
                     'Difficulty': row['Difficulty'],
                     'XP': int(row['XP']) if 'XP' in row and row['XP'] is not None else 0,
                     'Money': float(row['Money']) if 'Money' in row and row['Money'] is not None else 2.50,
-                    'Volume': int(row['Volume']) if 'Volume' in row and row['Volume'] is not None else 50
+                    'Volume': int(row['Volume']) if 'Volume' in row and row['Volume'] is not None else 50,
+                    'GameTheme': str(row['GameTheme']) if 'GameTheme' in row and row['GameTheme'] is not None else ''
                     }
                     break
             
@@ -2478,7 +2492,7 @@ else:
     _, center, __ = st.columns([3, 5, 3])
     with center:
         st.container(border=False, height=30)
-        st.image("Logo4.png", use_container_width=True)
+        st.image("static/PicoLogo.png", use_container_width=True)
         _, a, b, _ = st.columns(4)
         with a:
             if st.button("Login", icon=":material/person:", key="LoginBut", use_container_width=True, type="secondary", disabled=st.session_state.isLoading):

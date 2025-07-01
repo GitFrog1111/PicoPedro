@@ -12,8 +12,9 @@ DEFAULT WORLD SETTING
  • Tone: real conversation, no fluff, no over the top, no unrealistic, just a normal people
 
 USER DESCRIPTION OF GAME THEY WANT TO PLAY:
-overwrite the default world setting with this:
-Cyberpunk gritty city life., neon tokyo
+Overwrite the default world setting with this:
+{GameTheme}
+
 
 YOUR GOAL
 create the most engaging learning experience for the player possible.
