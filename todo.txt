@@ -1,0 +1,28 @@
+new game on welcome back screen
+
+fix onboarding (difficulty slider broke)
+
+Add suggested game themes
+
+split up account modal into sections
+
+improve inventory icon prompt
+
+add turn in to all mission chips and fix weird bumping down
+
+Sounds?!
+
+go live with stripe
+
+go live with googlecloud, add branding
+
+WEBSITE:
+remove dropshadow
+pin boat to right
+pass on the wordings
+we make speakers icons
+beta card color
+do something with header SHADCN?
+
+
+start discord start posting train leaves station

@@ -27,6 +27,32 @@ import os
 
 from streamlit_js_eval import streamlit_js_eval
 
+
+
+if 'FirstRun' not in st.session_state:
+    st.session_state.FirstRun = True
+    print(f"""
+#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#      
+=========================================
+|                                       |
+|         PICOPEDRO HAS BEGUN           |
+|                                       |
+=========================================
+#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#
+{time.time()}
+
+""")
+
+if 'Rerun' not in st.session_state:
+    print(f"""
+===========================
+|         RERUN           |    
+===========================
+{time.time()}
+
+""")
+
+
 elevenlabs = ElevenLabs(
   api_key=st.secrets['elevenLabs']['api_key'],
 )
@@ -67,6 +93,14 @@ def debug():
             NewGame()
         if st.button("Update"):
             st.rerun()
+
+        if st.button("Fal Instant Char"):
+            st.image(fal_instantChar('https://v3.fal.media/files/tiger/BkvwIkjxNmeRvsOxmXgOU.jpeg', 'Character is playing Guitar'))
+
+        if st.button("Shop", use_container_width=True, type="primary", disabled=st.session_state.isLoading):
+            cheekytoolify = {"name": "OPENSHOP", "variables": ['Dog.png', [['Dog.png', 'Doge', 100], ['imageguide1.png', 'windmill', 200], ['Melvin.png', 'eagle', 300]]]}
+            Shop(cheekytoolify)
+
         with st.container():
             chosenstates = ["Conversation", "toolbuffer", "player", "PoiList", "inventory", "characters", "missionList",]
             AllTabs = st.tabs(chosenstates)
@@ -103,7 +137,7 @@ def FAQ():
     #st.markdown("<h2 style = 'text-align: center;'>FAQ</h2>", unsafe_allow_html=True)
     FAQs = [
         ["What is this all about then?", """Do you know how babies learn? (hint: it's not Duolingo) - It's through massive amounts of whats called 'comprehensible input', They map sounds to experiences.\n\nComprehensable input is hard to come by in adult life - the best form is always going to be context rich encounters out in real life, but these are few and far between. Pico Pedro lets you explore an infinite world of rich encounters, all from home.\n\nBecome the president, (or a warlord), start a law firm, then commit corporate espionage on rival law firms, all memorable experiences that help you get fluent fast!"""],
-        ["What are the stars for?", "Running AI costs money, on the free version you get 50 stars a day to let you explore. If you are finding the game works for you, you can subscribe for unlimited playtime!"],
+        ["What are the stars for?", "Running AI costs money, on the free version you get 100 stars a day to let you explore. If you are finding the game works for you, you can subscribe for unlimited playtime!"],
         ["Who made this?", "Hi I'm Jonty, I'm a solo developer from the UK, and an avid language learner myself. I've used tonnes of language learning apps, and yeah, they suck. So I built something works for me, and I hope it works for you too!"]
 
     ]
@@ -144,6 +178,9 @@ def Main():
 
     if "ModalOpen" not in st.session_state:
         st.session_state.ModalOpen = False
+    
+    #every rerun, we know the modal must be closed
+    st.session_state.ModalOpen = False
 
     if "toolbuffer" not in st.session_state:
         st.session_state.toolbuffer = []
@@ -161,7 +198,7 @@ def Main():
             "Avatar": "🧙‍♂️",
             "Name": "Player",
             "Gender": "Male",
-            "Eggs": 50,
+            "Eggs": 100,
             "EggsReset": 1,
             "NativeLanguage": "English",
             "LearningLanguage": "German",            
@@ -211,12 +248,12 @@ def Main():
 
     if "Conversation" not in st.session_state:
         st.session_state.Conversation = [
-            {"role": "user", "content": "Start game, new POI."},
+            {"role": "assistant", "content": "<thinking> Start of game, I'll come up with an interesting start location, then call the new POI tool</thinking>"},
         ]
         AI(st.session_state.Conversation)
         #st.session_state.Conversation.append({"role": "assistant", "content": AI(st.session_state.Conversation)})
 
-    #keep convo to 50 messages
+    #trim convo to 50 messages
     if len(st.session_state['Conversation']) > 50:
         length = len(st.session_state['Conversation'])
         while length > 50:
@@ -238,26 +275,27 @@ def Main():
             character_chat(character_to_chat)
         else:
             st.rerun()
-    
-    Toolbuffer()
+    if st.session_state.isLoading:
+        Toolbuffer()
+    else:
+        NotiBuffer()
     
     # After initial loading and AI calls are done:
-    if st.session_state.isLoading: # If true (typically after initial setup and AI calls)
-        st.session_state.isLoading = False
-        st.rerun() # Rerun to reflect the new isLoading state and enable UI
+    # if st.session_state.isLoading: # If true (typically after initial setup and AI calls)
+    #     st.session_state.isLoading = False
+    #     st.rerun() # Rerun to reflect the new isLoading state and enable UI
     debug()
 
 
 def Toolbuffer():
     print(f'{time.time()} running toolbuffer: \n', st.session_state.toolbuffer)
-    # if st.session_state.get('ModalOpen', False):
-    #     return # Don't process buffer while a modal is open
-    
+    if st.session_state.get('ModalOpen', False):
+        return # Don't process buffer while a modal is open
 
     if len(st.session_state.toolbuffer) > 0:
         st.session_state.isLoading = True
-        
-        for tool in st.session_state.toolbuffer:
+        tools = st.session_state.toolbuffer
+        for tool in tools:
             st.session_state.isLoading = True
             try:
                 print('\nexecuting tool: ', tool)
@@ -265,27 +303,26 @@ def Toolbuffer():
                 # If a `message_as_character` tool is in the buffer, it's likely because the modal was open
                 # or the character didn't exist. We'll skip it here to avoid unexpected behavior.
                 
-                # if tool['name'].upper() == 'MESSAGE_AS_CHARACTER':
-                #     st.warning(f"Skipping buffered message tool for character: {tool['variables'][0]}")
-                #     continue
-
-                dispatch_tool(tool)
-                #st.success(f"🛴 tool: {tool['name']}")
-                st.session_state.toolbuffer.remove(tool)
-                
+                if tool['name'].upper() == 'MESSAGE_AS_CHARACTER':
+                    print(f'{time.time()} skipping message_as_character tool for character: {tool['variables'][0]}')
+                    #dispatch_tool(tool)
+                    del st.session_state.toolbuffer[0]
+                else:
+                    dispatch_tool(tool)
+                    del st.session_state.toolbuffer[0]
+                    st.rerun()                
             except Exception as e:
                 
                 print(f'{time.time()} error executing tool: {e}')
-                st.session_state.toolbuffer.remove(tool)
-                continue
-
-            if len(st.session_state.toolbuffer) == 0:
-                NotiBuffer()
-                st.session_state.isLoading = False
+                del st.session_state.toolbuffer[0]
                 st.rerun()
+    else:
+        st.session_state.isLoading = False
+        st.rerun()
 
 
 def NotiBuffer():
+    print('notibuffer: ', st.session_state.NotiBuffer)
     while len(st.session_state.NotiBuffer) > 0:
         Buffer = st.session_state.NotiBuffer[0]
         if Buffer[1]:
@@ -328,40 +365,40 @@ def check_for_tools(response):
 
 def dispatch_tool(tool):
     # This function executes a single tool.
-    if tool['name'].upper() == 'ADD_MISSION':
-        add_mission(tool)
-    elif tool['name'].upper() == 'COMPLETE_MISSION':
-        complete_mission(tool)
-    elif tool['name'].upper() == 'NEW_POI':
-        new_poi(tool)
-    elif tool['name'].upper() == 'ADD_ITEM_TO_INVENTORY':
-        new_item(tool)
-    elif tool['name'].upper() == 'REMOVE_ITEM_FROM_INVENTORY':
-        remove_item(tool)
-    elif tool['name'].upper() == 'GENERATE_CHARACTER':
-        new_character(tool)
-    elif tool['name'].upper() == 'LOAD_PREVIOUS_POI':
-        load_poi(tool)
-    elif tool['name'].upper() == 'TOGGLE_FOLLOW':
-        toggle_follow(tool)
-    elif tool['name'].upper() == 'CHANGE_MONEY':
-        ChangeMoney(tool)
-    elif tool['name'].upper() == 'LEVELUP':
-        Levelup()
-    elif tool['name'].upper() == 'MESSAGE_AS_CHARACTER':
-        # This case is now handled by a different flow to open the modal.
-        # It's kept here in case it's needed for other logic, but for opening the chat,
-        # the main loop will handle it.
-        # We can add a log or a pass if no other action is needed.
-        pass
-    else:
-        st.warning(f"Unknown tool in buffer: {tool['name']}")
+    try:
+        if tool['name'].upper() == 'ADD_MISSION':
+            add_mission(tool)
+        elif tool['name'].upper() == 'COMPLETE_MISSION':
+            complete_mission(tool)
+        elif tool['name'].upper() == 'NEW_POI':
+            new_poi(tool)
+        elif tool['name'].upper() == 'ADD_ITEM_TO_INVENTORY':
+            new_item(tool)
+        elif tool['name'].upper() == 'REMOVE_ITEM_FROM_INVENTORY':
+            remove_item(tool)
+        elif tool['name'].upper() == 'GENERATE_CHARACTER':
+            new_character(tool)
+        elif tool['name'].upper() == 'LOAD_PREVIOUS_POI':
+            load_poi(tool)
+        elif tool['name'].upper() == 'TOGGLE_FOLLOW':
+            toggle_follow(tool)
+        elif tool['name'].upper() == 'CHANGE_MONEY':
+            ChangeMoney(tool)
+        elif tool['name'].upper() == 'LEVELUP':
+            Levelup()
+        elif tool['name'].upper() == 'MESSAGE_AS_CHARACTER':
+            character_chat(tool['variables'][0])
+            # This case is now handled by a different flow to open the modal.
+            # It's kept here in case it's needed for other logic, but for opening the chat,
+            # the main loop will handle it.
+            # We can add a log or a pass if no other action is needed.
+            pass
+    except Exception as e:
+        print(f"Error in dispatch_tool: {e}")
 
 
 def handle_tools(tools):
     character_to_chat = None
-    
-        
     for tool in tools:
         st.session_state.isLoading = True
         if tool['name'].upper() == 'MESSAGE_AS_CHARACTER':
@@ -379,14 +416,6 @@ def handle_tools(tools):
                         message_to_append['translation'] = tool['variables'][3]
                     character['convoHistory'].append(message_to_append)
                     character_to_chat = character
-                else:
-                    # If character not found, buffer the tool to be handled later (e.g., after character is created).
-                    st.session_state.toolbuffer.append(tool)
-            else:
-                # If a modal is already open, it's likely the character_chat modal.
-                # The logic inside character_chat handles its own tools.
-                # Buffering it prevents interference.
-                st.session_state.toolbuffer.append(tool)
         else:
             st.session_state.toolbuffer.append(tool)
         
@@ -652,7 +681,7 @@ def message_as_character(tool):
     
 
 def new_character_from_message(name):
-    st.session_state.Conversation.append({"role": "assistant", "content": f"Invalid tool use, I need to generate a new character for {name}, and call message_as_character again"})
+    st.session_state.Conversation.append({"role": "assistant", "content": f"<thinking> Wait, that was invalid tool use, I need to generate a new character for {name}, and call [message_as_character] again</thinking>"})
     AI(st.session_state.Conversation)
     # r = SpotIntelegence(f'generate a character profile for {name} Output a piece of text exactly like this: name|description|traits, e.g. Lord Garrick|A ruthless count itching for court power|calculating, proud, ill-tempered')
     # r = r.split('|')
@@ -676,7 +705,7 @@ def ChangeMoney(tool):
     if amount > 0:
         st.session_state.NotiBuffer.append([f"💸 +{Currencylookup.get(st.session_state.player.get('LearningLanguage', 'English'), '€')}{amount}", "paymentChime.mp3"])
     else:
-        st.session_state.NotiBuffer.append([f"💸 -{Currencylookup.get(st.session_state.player.get('LearningLanguage', 'English'), '€')}{math.abs(amount)}", "paymentChime.mp3"])
+        st.session_state.NotiBuffer.append([f"💸 -{Currencylookup.get(st.session_state.player.get('LearningLanguage', 'English'), '€')}{abs(amount)}", "paymentChime.mp3"])
 
 ### image gen ###
 def on_queue_update(update):
@@ -697,7 +726,7 @@ def fal_icon(prompt):
         "prompt": prompt,
         "negative_prompt": "two, 2, multiple, duplicate, spritesheet, seamless, seamless texture, repetition, Text, label, words, title, caption, border, voxel, 3d, dark border, bland, flat color background",
         "loras": [{"path": 'https://civitai.com/api/download/models/160844?type=Model&format=SafeTensor', "scale": 1.0}],
-        "num_inference_steps": 14,
+        "num_inference_steps": 12,
         "guidance_scale": 6,
         "num_images": 1,
         "enable_safety_checker": True,
@@ -711,6 +740,37 @@ def fal_icon(prompt):
         ChangeEggs(-1)
     print(result['images'][0]['url'])
     return result['images'][0]['url']
+
+def fal_iconimg2img(prompt, image):
+    
+    #fal-ai/hidream-i1-full
+    #fal-ai/imagen4/preview
+    result = fal_client.subscribe(
+        "fal-ai/fast-sdxl/image-to-image",
+        arguments={
+        "prompt": prompt,
+        "image_url": image,
+        "negative_prompt": "two, 2, multiple, duplicate, spritesheet, seamless, seamless texture, repetition, Text, label, words, title, caption, border, voxel, 3d, dark border, bland, flat color background",
+        "loras": [{"path": 'https://civitai.com/api/download/models/160844?type=Model&format=SafeTensor', "scale": 1.0}],
+        "num_inference_steps": 12,
+        "guidance_scale": 6,
+        "num_images": 1,
+        "enable_safety_checker": True,
+        "output_format": "jpeg",
+        "image_size": {
+            "height": 1024,
+            "width": 1024
+        }
+        },
+        with_logs = True,
+        on_queue_update = on_queue_update
+        
+    )
+    if result['images'][0]['url']:
+        ChangeEggs(-1)
+    print(result['images'][0]['url'])
+    return result['images'][0]['url']
+
 
 def fal_poi_LOW(prompt):
     return f'{BaseUrl}placeholders/CityGates.png'
@@ -744,6 +804,30 @@ def fal_poi(prompt):
     print(result['images'][0]['url'])
     return result['images'][0]['url']
 
+
+def fal_instantChar(image, promptAction, prompt):
+    #prompt = f'{prompt}, is talking on the beach'
+
+    result = fal_client.subscribe(
+        "fal-ai/instant-character",
+        arguments={
+            "prompt": f'character is {promptAction} pixelart, sholders-up portrait of character talking',
+            "image_url": image,
+            "num_inference_steps": 8,
+            "guidance_scale": 3,
+            "image_size": {
+                "height": 512,
+                "width": 512
+            }
+        },
+        with_logs=True,
+        on_queue_update=on_queue_update,
+    )
+    print(result)
+    prompt = f'Character is {promptAction}, {prompt}'
+    image = fal_iconimg2img(prompt, result['images'][0]['url'])
+
+    return image
 
 
 
@@ -807,9 +891,11 @@ def ProcessCommand(command):
 
     #st.success(f"💬 {command}")
     #AddUserContext()
+    st.session_state.isLoading = True
     st.session_state.Conversation.append({"role": "user", "content": command})
     
     response, character_to_chat = AI(st.session_state.Conversation)
+    
     #st.success(f"🤖 {response}")
     print(response)
     return character_to_chat
@@ -838,9 +924,9 @@ def ChangeEggs(amount):
 
         #check if its refresh time
         if int(BaserowDB('get row', "Users", st.session_state.player['ID'])['EggsReset']) <= time.time():
-            st.session_state.player['Eggs'] = 50
+            st.session_state.player['Eggs'] = 100
             data_to_update = {
-                "Eggs": 50,
+                "Eggs": 100,
                 "EggsReset": int(time.time()+86400)
             }
             BaserowDB("update row", "Users", st.session_state.player['ID'], Data=data_to_update)
@@ -848,6 +934,50 @@ def ChangeEggs(amount):
         if st.session_state.player['Eggs'] <= 0:
             #st rerun 
             st.rerun()
+
+@st.dialog(" ")
+def Shop(tool):
+
+    def buyitem(item, Speechindex):
+        # if st.session_state.player['Money'] >= item[2]:
+        st.session_state.player['Money'] -= item[2]
+        FormattedItem = {
+            "name": item[1],
+            "description": item[2],
+            "image": item[0]
+        }
+        st.session_state.inventory.append(FormattedItem)
+        st.session_state.NotiBuffer.append([f"💸 -{item[2]}", "paymentChime.mp3"])
+        
+        Speechindex = (Speechindex+1) % len(Speeches)
+        speechempty.write_stream(Fakestream(Speeches[Speechindex]))
+        
+        
+    
+    Speeches = ['Thank you', 'That ones a bargain', 'lovely choice']
+    Speechindex = 0
+    shopkeeper = tool['variables'][0]
+    Items = tool['variables'][1]
+    
+
+    st.title("🛒 Shop")
+    cols = st.columns(3)
+    count = 0
+    for item in Items:
+        column = count %3
+        count += 1
+        with cols[column]:
+            st.image(item[0], caption = f"{item[2]}\n{item[1]}")
+            if st.button('buy', key = f"buy{item[1]}", use_container_width=True, type="tertiary", disabled=st.session_state.isLoading):
+                buyitem(item, Speechindex)
+    st.divider()
+    Shopkeep, speech = st.columns([1, 4])
+    with Shopkeep:
+        st.image(shopkeeper)
+    with speech:
+        speechempty = st.empty()
+        
+                
 
 @st.dialog(" ")
 def Levelup():
@@ -868,8 +998,11 @@ def Levelup():
     a, b, c = random.sample(rewards, 3)
     cols = st.columns([1, 1, 1])
     with cols[0]:
-        if st.button(a[0], key = "Levelup1", use_container_width=True, type="tertiary", disabled=st.session_state.isLoading):
-            st.session_state.Conversation.append({"role": "assistant", "content": a[1]})
+        with st.container(border = True, height = 300):
+            st.container(border=False, height = 100)
+            if st.button(a[0], key = "Levelup1", use_container_width=True, type="tertiary", disabled=st.session_state.isLoading):
+                st.session_state.Conversation.append({"role": "assistant", "content": a[1]})
+                
     with cols[1]:
         if st.button(b[0], key = "Levelup2", use_container_width=True, type="tertiary", disabled=st.session_state.isLoading):
             st.session_state.Conversation.append({"role": "assistant", "content": b[1]})
@@ -948,7 +1081,9 @@ def speechtotext(recording):
 
     transcription = client.audio.transcriptions.create(
         model="gpt-4o-transcribe", 
-        file=audio_file
+        file=audio_file,
+        prompt= f"The person is speaking in {st.session_state.player['LearningLanguage']}possibly {st.session_state.player['NativeLanguage']}. transcribe exactly what they say without corrections."
+        
     )
     if transcription.text:
         ChangeEggs(-1)
@@ -983,9 +1118,15 @@ def character_chat(Character):
         # Use .get() for safer access to dictionary keys
         char_name = Character.get('name', 'Unknown Character')
         char_image_url = Character.get('image')
+        if 'reactionImages' not in Character:
+            Character['reactionImages'] = [Character['image']]
+        if 'reactionIndex' not in Character:
+            Character['reactionIndex'] = 0
 
         if char_image_url:
-            st.image(char_image_url, caption=char_name, use_container_width=True)
+            characterImageEmpty = st.empty()
+            with characterImageEmpty:
+                st.image(Character['reactionImages'][Character['reactionIndex']], caption=char_name, use_container_width=True)
         else:
             # Fallback if image is missing or None
             st.markdown(f"🖼️")
@@ -993,8 +1134,10 @@ def character_chat(Character):
             # st.image("path/to/your/placeholder.png", caption=char_name, use_container_width=True)
     
     if Character.get('is_following', False):
-        with __:
-            st.caption("👥")
+        with center:
+            st.markdown(f"<p style='text-align: center; color: grey; margin-top: -18px; font-size: 14px;'>👥</p>", unsafe_allow_html=True)
+
+
     # Ensure 'convoHistory' key exists in the Character dictionary, initializing if necessary.
     if 'convoHistory' not in Character or not isinstance(Character.get('convoHistory'), list):
         Character['convoHistory'] = []
@@ -1061,13 +1204,13 @@ def character_chat(Character):
                                 if 'translation' in message_entry:
                                     HelpText = message_entry['translation']
                                 else:
-                                    HelpText = SpotIntelegence(f"Output solely the corrected version of the users text in {st.session_state.player['LearningLanguage']}. Highlight where the corrections are with ** marks. example: User: Ich fahre ins Auto gehen\nYou: Ich fahre **mit dem Auto**.\nIf there is nothing to correct, respond exactly with the text 'Perfect'", message_entry['content'], "gpt-4o-mini")
+                                    HelpText = SpotIntelegence(f"Output solely the corrected version of the users text in {st.session_state.player['LearningLanguage']}. Highlight where the corrections are with ** marks. example: User: Ich fahre ins Auto gehen\nYou: Ich fahre **mit dem Auto**.\nIf there is nothing to correct, respond exactly with ✔", message_entry['content'], "gpt-4o-mini")
                                     message_entry['translation'] = HelpText
-                                    if HelpText.upper() != 'PERFECT':
+                                    if HelpText.upper() != '✔':
                                         AddXP(int(len(message_entry['content'])/10))
                                 
                                 st.container(border=False, height = 1)
-                                if HelpText.upper() == 'PERFECT':
+                                if HelpText.upper() == '✔':
                                     st.markdown(f"<p style='text-align: left; color: dark-grey; margin-top: 2px; margin-left: 5px; font-size: 13px;'>💎</p>", unsafe_allow_html=True)
                                 else:
                                     st.markdown(f"<p style='text-align: center; color: grey; margin-top: 50px; font-size: -1px;'> </p>", unsafe_allow_html=True, help = HelpText)
@@ -1084,6 +1227,7 @@ def character_chat(Character):
         
     # Chat input field
     #user_input = st.chat_input('Your message...', key=f'chat_input_{chat_input_key_suffix}', disabled=st.session_state.isLoading)
+    progress_bar = st.empty()
 
     UserAudioInput = st.audio_input(f"Speak to {Character.get('name', 'an unnamed character')}...", key=f'audio_input_{chat_input_key_suffix}')
     
@@ -1093,8 +1237,9 @@ def character_chat(Character):
         #st.audio(speech)
 
     if UserAudioInput:
+        progress_bar.progress(0.1)
         UserMessageText = speechtotext(UserAudioInput)
-
+        progress_bar.progress(0.3)
 
         # 1. Add user message to history
         Character['convoHistory'].append({"role": "user", "content": UserMessageText})
@@ -1110,6 +1255,9 @@ def character_chat(Character):
         translation = ""
         phonetic = ""
         charm = []
+        
+        progress_bar.progress(0.5)
+
         while toolsnotfound and retrys < 5:
             retrys += 1
             ai_response_full, _ = AI(st.session_state.Conversation)
@@ -1125,6 +1273,21 @@ def character_chat(Character):
                             if len(tool['variables']) > 3:
                                 translation = tool['variables'][3]
                             toolsnotfound = False
+
+
+                    if tool['name'].upper() == 'UPDATE_CHARACTER_IMAGE':
+                        if tool['variables'][0].upper() == Character.get('name', 'an unnamed character').upper():
+                            prompt = f'PixArFK style, portrait of {Character.get('name')}, {Character.get('description').split("Image")[0]} pixel art, close up view on character. game character icon, pixel art, shoulders-up shot, 3/4 view, jrpg style character icon of a German person'
+                            promptAction = tool['variables'][1]
+
+                            #promptAction = SpotIntelegence('Given the following conversation, output a short, one sentence description of what the NPC is doing, and their emotion. e.g.\n making lunch, mad at you, happy to see you, sad while driving car etc', st.session_state.convoHistory[-1]['content'], "gpt-4o-mini")
+                            print(promptAction)
+                            with characterImageEmpty:
+                                Character['reactionImages'].append(fal_instantChar(Character.get('image'), promptAction, prompt))
+                                Character['reactionIndex'] += 1
+                                st.image(Character['reactionImages'][len(Character['reactionImages'])-1], caption=char_name, use_container_width=True)
+                                
+                        
                     if tool['name'].upper() == 'ADD_MISSION':
                         charm.append("💠")
                     if tool['name'].upper() == 'CHANGE_MONEY':
@@ -1135,7 +1298,10 @@ def character_chat(Character):
                     if tool['name'].upper() == 'ADD_ITEM_TO_INVENTORY':
                         charm.append("🎒")
                     if tool['name'].upper() == 'REMOVE_ITEM_FROM_INVENTORY':
-                        charm.append("🎁")
+                        charm.append("🎒")
+                    if tool['name'].upper() == 'NEW_POI':
+                        Character['reactionIndex'] = 0
+                        st.rerun()
                     
 
                         
@@ -1149,6 +1315,7 @@ def character_chat(Character):
             # if retrys >= 8:
             #     st.session_state.Conversation.append({"role": "assistant", "content": f"{Character.get('name', 'an unnamed character')} has died"})
             #     st.rerun()
+        progress_bar.progress(0.9)
 
         # 5. Add AI response to history
         message_to_append = {"role": "assistant", "content": ai_response}
@@ -1160,13 +1327,16 @@ def character_chat(Character):
             message_to_append['charm'] = charm
         Character['convoHistory'].append(message_to_append)
 
+        
+
         with Speaker:
-            with st.container(border=False, height = 50):
+            with st.container(border=False):
                 mp3_bytes = text_to_speech_bytes(str(ai_response), Character.get('voice_id', '6CS8keYmkwxkspesdyA7'))
                 st.audio(mp3_bytes, format="audio/mp3", autoplay=True)
         # 6. Re-render to show AI's response
         
         render_current_messages()
+        progress_bar.empty()
 
 def Tutor_chat_Sound():
     SoundEngine("OpenChat2.mp3")
@@ -1469,7 +1639,7 @@ def AccountModal():
             st.caption("Volume:")
             st.container(border=False, height=4)
             st.caption("Game Theme:")
-            st.container(border=False, height=4)
+            
         
         with DataCols[2]:
             st.container(border=False, height=50)
@@ -1915,6 +2085,7 @@ def renderMainUI():
 
     # Map,Mission,Inventory
     with Tool3:
+        
         MBut, JBut, IBut = st.columns(3)
         with MBut:
             if st.button("", icon=":material/explore:", key="MBut", use_container_width=True, type="tertiary", disabled=st.session_state.isLoading):
@@ -1939,12 +2110,12 @@ def renderMainUI():
                     st.session_state.UserBox = "inventory"
 
     ### Main UI ###
-    _, col1, _, col2, _, col3, _ = st.columns([0.1, 5, 1.5, 6.5, 1.5, 5, 0.1])
+    _, col1, _, col2, _, col3, _ = st.columns([0.1, 5.1, 1.5, 6.5, 1.5, 5.1, 0.1])
 
 
     # Characters
     with col1:
-        with st.container(border=False):
+        with st.container(border=False, height = 500):
             #Vertical spacing
             c1, c2, c3 = st.columns(3)
             counter = 0
@@ -1968,8 +2139,9 @@ def renderMainUI():
                 css_styles = f"""
                     button {{
                         background-image: url('{character_image_url}');
-                        background-size: cover;
-                        background-position: center;
+                        background-size: 165%;
+                        background-origin: border-box;
+                        background-position: top;
                         color: transparent; /* To hide any button text, as label is empty */
                         border-radius: 20px;
                         width: 100px;
@@ -2156,11 +2328,129 @@ def renderMainUI():
                 st.container(border=False, height=1)
     with bottombar[1]:
         #st.container(border=False, height=1 )
+        suggestions = [
+            "Join cult",
+            "Go to kings palace",
+            "Travel to Mars",
+            "Hijack luxury yacht",
+            "Infiltrate secret society",
+            "Challenge champion",
+            "Negotiate peace treaty",
+            "Hack network",
+            "Tame wild griffin",
+            "Host underground rave",
+            "Explore caves",
+            "Train rebel fighters",
+            "Sabotage enemy pipeline",
+            "Build prototype car",
+            "Map underground tunnels",
+            "Stage royal assassination",
+            "Broker arms deal",
+            "Pilot jet",
+            "Sabotage enemy supply lines",
+            "Smuggle Contraband though border",
+            "Train Direwolf",
+            "Terraform Moon",
+            "enter drop pod",
+            "Paint floating skybridge mural",
+            "Hunt cybernetic Leviathan",
+            "Launch underground newspaper",
+            "Hack biometric security system",
+            "Build stealth recon drone",
+            "Rescue hostages from sky fortress",
+            "Plant spyware in government network",
+            "Explore hollow earth caverns",
+            "Forge alliance with werewolves",
+            "Steal secrets from AI overlord",
+            "Brew psychoactive mind elixir",
+            "Infiltrate virtual reality cult",
+            "Conduct black market auction",
+            "Race solar sail yacht",
+            "Map haunted space station",
+            "Recruit mercenaries for rebellion",
+            "Clone extinct jungle beast",
+            "Hijack autonomous cargo convoy",
+            "Decode time capsule broadcast",
+            "Lead expedition into nebula",
+            "Betray underworld crime lord",
+            "Pirate suborbital transport",
+            "Compose revolutionary opera",
+            "Discover lost undersea temple",
+            "Smuggle refugees across border",
+            "Program self-aware companion",
+            "Summon storm elemental",
+            "Trade secrets with alien envoy",
+            "Sabotage planetary defense grid",
+            "Train shadow assassin unit",
+            "Harvest moonlight crystals",
+            "Escort royal heir through wasteland",
+            "Operate hidden narcotics lab",
+            "Chart map of dreamscape realm",
+            "Host masquerade ball in ruins",
+            "Plant resistance cells in metropolis",
+            "Build floating spice market",
+            "Rewire cybernetic hive mind",
+            "Stage mutiny on void cruiser",
+            "Explore crystal dimension rift",
+            "Train virtual gladiator fighter",
+            "Mine antimatter from star core",
+            "Broker truce between dragon clans",
+            "Film documentary on ghost fleet",
+            "Defuse nuclear smuggling ring",
+            "Cultivate bioluminescent orchards",
+            "Decipher alien star charts",
+            "Run clandestine blackmail ring",
+            "Race through zero-g Speedway",
+            "Construct secret underground library",
+            "Chart underwater city map",
+            "Steal prototype energy core",
+            "Train psychic warhound",
+            "Broker galactic trade pact",
+            "Host street rave",
+            "Terraform Desert Moon",
+            "Decode ancient hieroglyphs",
+            "Race hyperloop freight pod",
+            "Negotiate release of quantum prisoner",
+            "Train band of rogue AI agents",
+            "Pilot interdimensional hot air balloon",
+            "Steal memory from ancient Titan",
+            "Chart ocean currents on Europa",
+            "Host puppet revolution in Megacity",
+            "Manufacture synthetic mythical beast",
+            "Map genetic code of cosmic virus",
+            "Organize cross-galaxy peace march",
+            "Engineer sentient living spaceship",
+            "Rally colony against corporate tyrant",
+            "Stage heist on celestial bank",
+            "Translate language of sentient trees",
+            "Build refugee sanctuary on Mars",
+            "Train squad of nano-assassins",
+            "Operate time-loop recon team",
+            "Plunder abandoned orbital graveyard",
+            "Go to coffeeshop",
+            "Go to mechanic",
+            "Go home",
+            "Go to gym",
+            "Go to bar",
+            "Go to club",
+            "Go to restaurant",
+            "Go to park",
+            "Order coffee",
+            "Buy Nvidia stock",
+            "Go to guitar lesson",
+            "Go to work",
+            "Clean room",
+            "Find toilet"            
+        ]
+
+        suggestion = "What do you want to do?"
+
         st.markdown("<p style='text-align: center; color: grey; margin-top: -30px;'> </p>", unsafe_allow_html=True)
-        prompt = st.chat_input("What do you want to do?", disabled=st.session_state.isLoading)
+        prompt = st.chat_input(placeholder = suggestion, key = "promptbox", disabled=st.session_state.isLoading)
         if prompt:
             st.session_state.isLoading = True
             st.session_state.Prompt = prompt
+            print('prompt:', prompt)
             st.rerun()
 
 def TimeUntil(unix_timestamp):
@@ -2186,7 +2476,7 @@ if 'SoundBuffer' not in st.session_state:
 
 
 def SoundPlayer():
-    print('SoundPlayer: ', st.session_state.SoundBuffer)
+    return
     if 'SoundPlayer' not in st.session_state:
         player = st.empty()
       
@@ -2197,7 +2487,7 @@ def SoundPlayer():
             with player:
                 with st.container(border=False, height=1):
                     st.container(border=False, height=10)
-                    st.audio(f"https://picopedro.streamlit.app/app/static/sounds/{sound}", format="audio/mp3", autoplay=True)
+                    st.audio(f"static/sounds/{sound}", format="audio/mp3", key = uuid.uuid4(), autoplay=True)
                 
                 
 def SoundEngine(sound):
@@ -2428,7 +2718,7 @@ if st.user.is_logged_in:
                 "Name": st.user.name,
                 "Avatar": "🧑",
                 "ProfilePicture": 1,
-                "Eggs": 50,
+                "Eggs": 100,
                 "EggsReset": int((datetime.now(timezone.utc) + timedelta(days=1)).timestamp()),
                 "NativeLanguage": "English",
                 "Gender": "Not Set",
