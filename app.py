@@ -74,8 +74,8 @@ if "isLoading" not in st.session_state:
     st.session_state.isLoading = True # Default to True for initial app load
 
 st.set_page_config(
-    page_title="Vaill",
-    page_icon="🗻",
+    page_title="PicoPedro",
+    page_icon="🗺",
     layout="wide",
     menu_items=None,
     initial_sidebar_state="collapsed",
