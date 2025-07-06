@@ -82,6 +82,13 @@ st.set_page_config(
     
 )
 
+Mobile = False
+if streamlit_js_eval(js_expressions="/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i.test(a)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0,4)))window.location=b})(navigator.userAgent||navigator.vendor||window.opera,'http://detectmobilebrowser.com/mobile'"):
+    st.title('👷‍♂️Mobile site currently under construction 🏗')
+    st.write('Please visit on desktop')
+    time.sleep(10)
+    st.stop()
+
 def NewGame():
     streamlit_js_eval(js_expressions="parent.window.location.reload()")
 
@@ -800,7 +807,7 @@ def fal_poi(prompt):
         
     )
     if result['images'][0]['url']:
-        ChangeEggs(-5)
+        ChangeEggs(-1)
     print(result['images'][0]['url'])
     return result['images'][0]['url']
 
@@ -1344,6 +1351,11 @@ def Tutor_chat_Sound():
 
 @st.dialog(" ")
 def Tutor_chat():
+    # Initialize session state variables
+    if "vocabTables" not in st.session_state:
+        st.session_state.vocabTables = []
+    
+    
     def get_system_prompt():
         with open("TutorSystemPrompt.txt", "r", encoding="utf-8") as file:
             system_prompt = file.read()
@@ -1357,9 +1369,9 @@ def Tutor_chat():
     get_system_prompt()
     
     def AppendStarting():
-
         st.session_state.TutorHistory = []
         st.session_state.TutorHistory.extend([{"role": "assistant", "content": "I'm here to help! What do you need assistance with?"}])
+        
     if "TutorHistory" not in st.session_state:
         AppendStarting()
     if len(st.session_state.TutorHistory) == 0:
@@ -1372,24 +1384,54 @@ def Tutor_chat():
     
     chat_container = st.container(border=True, height=300)
 
-    for message in st.session_state.TutorHistory:
+    for i, message in enumerate(st.session_state.TutorHistory):
         if message["role"] == "system":
             continue
-        avatar = st.session_state.player['Avatar'] if message["role"] == "user" else "✨"
+        avatar = st.session_state.player['Avatar'] if message["role"] == "user" else "💬"
         name = "you" if message["role"] == "user" else "assistant"
+        
+        # Check if this message contains tables (only for assistant messages)
+        has_tables = False
+        if message["role"] == "assistant":
+            tables = detect_markdown_tables(message["content"])
+            has_tables = len(tables) > 0
+        
         with chat_container:
-            with st.chat_message(name, avatar=avatar):
-                if message["role"] == "user":
-                    st.markdown(f"<p style='text-align: left; background-color: #F0F2F6; padding: 10px; border-radius: 10px;'>{message['content']}</p>", unsafe_allow_html=True)
-                    
-                else:
-                    st.markdown(f"<p style='text-align: left; padding: 10px; border-radius: 10px;'>{message['content']}</p>", unsafe_allow_html=True)
-
-            # with st.chat_message(name, avatar=avatar):
-            #     st.markdown(message["content"])
+            # Create columns for message and pin button
+            if has_tables:
+                msg_col, pin_col = st.columns([10, 1])
+            else:
+                msg_col = st.container()
+                pin_col = None
             
-
-
+            with msg_col:
+                with st.chat_message(name, avatar=avatar):
+                    if message["role"] == "user":
+                        st.markdown(f"<p style='text-align: left; background-color: #F0F2F6; padding: 10px; border-radius: 10px;'>{message['content']}</p>", unsafe_allow_html=True)
+                    else:
+                        st.markdown(f"<p style='text-align: left; padding: 10px; border-radius: 10px;'>{message['content']}</p>", unsafe_allow_html=True)
+            
+            # Add pin button for messages with tables
+            if has_tables and pin_col:
+                with pin_col:
+                    st.container(border=False, height=10)
+                    if st.button("📌", key=f"pin_{i}", help="Pin", type="tertiary", disabled=st.session_state.isLoading):
+                        # Convert all tables in this message to DataFrames
+                        message_tables = []
+                        for table in tables:
+                            df = markdown_table_to_dataframe(table)
+                            if df is not None:
+                                message_tables.append(df)
+                        
+                        # Set pinnedVocab to the message content and tables
+                        st.session_state.pinnedVocab = {
+                            "content": message["content"],
+                            "tables": message_tables,
+                            "timestamp": i
+                        }
+                        st.session_state.ShowVocab = True
+                        
+                        st.rerun()
 
     def Run(prompt):
         get_system_prompt()
@@ -1414,6 +1456,21 @@ def Tutor_chat():
                 tools = check_for_tools(response)
                 if tools:
                     handle_tools(tools)
+        
+        # Scan response for tables and add to vocabTables
+        tables = detect_markdown_tables(response)
+        if tables:
+            for table in tables:
+                df = markdown_table_to_dataframe(table)
+                if df is not None:
+                    # Add to vocabTables with metadata
+                    table_entry = {
+                        "dataframe": df,
+                        "raw_table": table,
+                        "message_index": len(st.session_state.TutorHistory),
+                        "timestamp": len(st.session_state.TutorHistory)
+                    }
+                    st.session_state.vocabTables.append(table_entry)
         
         st.session_state.TutorHistory.append({"role": "assistant", "content": response})
 
@@ -1448,11 +1505,17 @@ def Tutor_chat():
     with bottombarcols[0]:
         if st.button(" ", icon=":material/edit_square:", key="newchat", use_container_width=True, type="tertiary", disabled=st.session_state.isLoading, help = "New Chat"):
             AppendStarting()
-            
             Run("New chat")
-            
-            
-import requests
+
+    # # Display pinned vocabulary table if exists
+    # if st.session_state.pinnedVocab:
+    #     if st.session_state.pinnedVocab["tables"]:
+    #         for i, df in enumerate(st.session_state.pinnedVocab["tables"]):
+    #             st.dataframe(df, use_container_width=True)
+        
+    #     if st.button("Unpin", key="unpin_vocab", type="secondary"):
+    #         st.session_state.pinnedVocab = None
+    #         st.rerun()
 
 def upload_file_to_baserow(file_path):
     DataBaseToken = st.secrets["baserow"]["api_key"]
@@ -2114,102 +2177,113 @@ def renderMainUI():
 
 
     # Characters
+
     with col1:
-        with st.container(border=False, height = 500):
-            #Vertical spacing
-            c1, c2, c3 = st.columns(3)
-            counter = 0
-            
-            for character in st.session_state.characters:
-                is_at_current_poi = character['POI'] == st.session_state.POI['Name']
-                is_following_player = character.get('is_following', False)
+        CharactersEmpty = st.empty()
+        def RenderCharacters(height):
+            with st.container(border=False, height = height):
+                #Vertical spacing
+                c1, c2, c3 = st.columns(3)
+                counter = 0
+                
+                for character in st.session_state.characters:
+                    is_at_current_poi = character['POI'] == st.session_state.POI['Name']
+                    is_following_player = character.get('is_following', False)
 
-                if not (is_at_current_poi or is_following_player):
-                    continue
+                    if not (is_at_current_poi or is_following_player):
+                        continue
 
-                
-                
-                # Define common elements for the character button
-                character_name = character['name']
-                character_image_url = character['image']
-                
-                # Prepare CSS for the stylable container
-                # Using f-string to dynamically set the background image
-                # Properties are taken from the provided example
-                css_styles = f"""
-                    button {{
-                        background-image: url('{character_image_url}');
-                        background-size: 165%;
-                        background-origin: border-box;
-                        background-position: top;
-                        color: transparent; /* To hide any button text, as label is empty */
-                        border-radius: 20px;
-                        width: 100px;
-                        height: 152px;
-                        margin-left: auto; /* Horizontally center the button in its column cell */
-                        margin-right: auto;
-                        display: block; /* Necessary for margin: auto to work for block elements */
-                    }}
-                """
-                
-                # Define the action for the button click
-                # Assuming character_chat function exists and expects the character's name as a string argument
-                # as per the example: args=("Melvin",)
-                on_click_action = character_chat
-                click_args = (character,) # Pass the whole character dictionary
-                
-                # Generate unique keys for the container and button using name and counter
-                container_key = f"{character_name}_{counter}_Container"
-                button_key = f"{character_name}_{counter}_Key"
+                    
+                    
+                    # Define common elements for the character button
+                    character_name = character['name']
+                    character_image_url = character['image']
+                    
+                    # Prepare CSS for the stylable container
+                    # Using f-string to dynamically set the background image
+                    # Properties are taken from the provided example
+                    css_styles = f"""
+                        button {{
+                            background-image: url('{character_image_url}');
+                            background-size: 165%;
+                            background-origin: border-box;
+                            background-position: top;
+                            color: transparent; /* To hide any button text, as label is empty */
+                            border-radius: 20px;
+                            width: 100px;
+                            height: 152px;
+                            margin-left: auto; /* Horizontally center the button in its column cell */
+                            margin-right: auto;
+                            display: block; /* Necessary for margin: auto to work for block elements */
+                        }}
+                    """
+                    
+                    # Define the action for the button click
+                    # Assuming character_chat function exists and expects the character's name as a string argument
+                    # as per the example: args=("Melvin",)
+                    on_click_action = character_chat
+                    click_args = (character,) # Pass the whole character dictionary
+                    
+                    # Generate unique keys for the container and button using name and counter
+                    container_key = f"{character_name}_{counter}_Container_{time.time()}"
+                    button_key = f"{character_name}_{counter}_Key_{time.time()}"
 
-                # Place the character button and caption in the appropriate column
-                if counter % 3 == 0:
-                    with c1:
-                        with stylable_container(key=container_key, css_styles=css_styles):
-                            st.button(
-                                label="", # Empty label as per example
-                                on_click=on_click_action,
-                                args=click_args,
-                                key=button_key,
-                                disabled=st.session_state.isLoading
+                    # Place the character button and caption in the appropriate column
+                    if counter % 3 == 0:
+                        with c1:
+                            with stylable_container(key=container_key, css_styles=css_styles):
+                                st.button(
+                                    label="", # Empty label as per example
+                                    on_click=on_click_action,
+                                    args=click_args,
+                                    key=button_key,
+                                    disabled=st.session_state.isLoading
+                                )
+                            # Display character name as a centered caption below the button
+                            st.markdown(
+                                f"<p style='text-align: center; margin-top: 2px;'>{character_name}</p>", 
+                                unsafe_allow_html=True
                             )
-                        # Display character name as a centered caption below the button
-                        st.markdown(
-                            f"<p style='text-align: center; margin-top: 2px;'>{character_name}</p>", 
-                            unsafe_allow_html=True
-                        )
-                        
-                elif counter % 3 == 1:
-                    with c2:
-                        with stylable_container(key=container_key, css_styles=css_styles):
-                            st.button(
-                                label="", 
-                                on_click=on_click_action,
-                                args=click_args,
-                                key=button_key,
-                                disabled=st.session_state.isLoading
+                            
+                    elif counter % 3 == 1:
+                        with c2:
+                            with stylable_container(key=container_key, css_styles=css_styles):
+                                st.button(
+                                    label="", 
+                                    on_click=on_click_action,
+                                    args=click_args,
+                                    key=button_key,
+                                    disabled=st.session_state.isLoading
+                                )
+                            st.markdown(
+                                f"<p style='text-align: center; margin-top: 2px;'>{character_name}</p>", 
+                                unsafe_allow_html=True
                             )
-                        st.markdown(
-                            f"<p style='text-align: center; margin-top: 2px;'>{character_name}</p>", 
-                            unsafe_allow_html=True
-                        )
-                        
-                elif counter % 3 == 2:
-                    with c3:
-                        with stylable_container(key=container_key, css_styles=css_styles):
-                            st.button(
-                                label="",
-                                on_click=on_click_action,
-                                args=click_args,
-                                key=button_key,
-                                disabled=st.session_state.isLoading
+                            
+                    elif counter % 3 == 2:
+                        with c3:
+                            with stylable_container(key=container_key, css_styles=css_styles):
+                                st.button(
+                                    label="",
+                                    on_click=on_click_action,
+                                    args=click_args,
+                                    key=button_key,
+                                    disabled=st.session_state.isLoading
+                                )
+                            st.markdown(
+                                f"<p style='text-align: center; margin-top: 2px;'>{character_name}</p>", 
+                                unsafe_allow_html=True
                             )
-                        st.markdown(
-                            f"<p style='text-align: center; margin-top: 2px;'>{character_name}</p>", 
-                            unsafe_allow_html=True
-                        )
-                counter +=1
-        
+                    counter +=1
+        with CharactersEmpty:
+            if st.session_state.ShowVocab == True:
+                RenderCharacters(300)
+            else:
+                RenderCharacters(500)
+        #st.container(border=False, height=5)
+        #vocab
+        VocabEmpty = st.empty()
+        #PinnedVocab()
 
 
     # POI Image
@@ -2287,11 +2361,11 @@ def renderMainUI():
         with st.container(border=False):
             DisplayUserBox()
 
-
-    bottombar = st.columns([4, 4, 4])
+                          #pad, tutorbutton, vocabbutton, pad, cbox, pad, pad
+    bottombar = st.columns([1,       4,           4,      20,   30,   28,  1])
     #Tutor button
     if st.session_state.isLoading == False:
-        with bottombar[0]:
+        with bottombar[1]:
             css_styles = f"""
                 button {{
                     background-image: url('{BaseUrl}tutorgif.gif');
@@ -2308,8 +2382,6 @@ def renderMainUI():
                     padding: 0;
                     margin: 0;
                     outline: none;
-                    
-
                 }}
             """
             
@@ -2326,7 +2398,40 @@ def renderMainUI():
                     
                 )
                 st.container(border=False, height=1)
-    with bottombar[1]:
+    
+    def PinnedVocab():
+        with VocabEmpty:
+            with st.container(border=False, height=200):
+                
+                if 'ShowVocab' not in st.session_state:
+                    st.session_state.ShowVocab = True
+                if 'pinnedVocab' not in st.session_state:
+                    st.session_state.pinnedVocab = None
+
+                if st.session_state.pinnedVocab:
+                    if st.session_state.ShowVocab == True:
+                        if st.session_state.pinnedVocab["tables"]:
+                            for i, df in enumerate(st.session_state.pinnedVocab["tables"]):
+                                st.table(df)
+                        with CharactersEmpty:
+                            RenderCharacters(300)
+                    else:
+                        VocabEmpty.empty()
+                        with CharactersEmpty:
+                            RenderCharacters(500)
+                    
+
+    with bottombar[2]:
+        # Display pinned vocabulary table if exists
+        with VocabEmpty:
+            PinnedVocab()
+        if st.session_state.pinnedVocab:
+            if st.button("", icon = ':material/notes:', key="showhidevocab", type="tertiary", disabled=st.session_state.isLoading):
+                st.session_state.ShowVocab = not st.session_state.ShowVocab
+                PinnedVocab()
+
+        
+    with bottombar[4]:
         #st.container(border=False, height=1 )
         suggestions = [
             "Join cult",
@@ -2879,3 +2984,48 @@ if 'DifficultyOptions' not in st.session_state:
 #                 st.rerun()
         
 #st.json(st.session_state.player)
+
+# Add these helper functions before the Tutor_chat function (around line 1340)
+
+def detect_markdown_tables(text):
+    """Detect and extract markdown tables from text"""
+    import re
+    
+    # Pattern to match markdown tables
+    table_pattern = r'(?:\|.*\|.*\n)+(?:\|[-\s:|]*\|.*\n)+(?:\|.*\|.*\n)*'
+    tables = re.findall(table_pattern, text, re.MULTILINE)
+    return tables
+
+def markdown_table_to_dataframe(table_text):
+    """Convert markdown table to pandas DataFrame"""
+    lines = table_text.strip().split('\n')
+    
+    # Remove empty lines and clean up
+    lines = [line.strip() for line in lines if line.strip()]
+    
+    if len(lines) < 2:
+        return None
+    
+    # Extract headers
+    headers = [cell.strip() for cell in lines[0].split('|') if cell.strip()]
+    
+    # Skip the separator line (line 1)
+    data_lines = lines[2:]
+    
+    # Extract data rows
+    data = []
+    for line in data_lines:
+        row = [cell.strip() for cell in line.split('|') if cell.strip()]
+        if row:  # Only add non-empty rows
+            data.append(row)
+    
+    if not data:
+        return None
+    
+    # Create DataFrame
+    try:
+        df = pd.DataFrame(data, columns=headers)
+        return df
+    except Exception as e:
+        print(f"Error creating DataFrame: {e}")
+        return None
