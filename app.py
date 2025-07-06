@@ -85,13 +85,13 @@ st.set_page_config(
     
 )
 
-ua_string = st_javascript("""window.navigator.userAgent;""")
-user_agent = str(parse(ua_string))
-st.session_state.is_session_pc = user_agent.is_pc
-if not st.session_state.is_session_pc == '0':
-    st.title('👷‍♂️Mobile site currently under construction 🏗')
-    st.write('Please visit on desktop')
-    time.sleep(1000)
+ua_string = str(st_javascript("""window.navigator.userAgent;"""))
+user_agent = (parse(ua_string))
+st.session_state.is_session_pc = bool(user_agent.is_pc)
+if not st.session_state.is_session_pc:
+    st.title('Mobile site currently under construction 👷‍♂️🏗')
+    st.write('Please visit on desktop :)')
+    #time.sleep(1000)
     st.stop()
 
 
