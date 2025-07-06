@@ -5,6 +5,8 @@ streamlit-image-coordinates>=0.1.6
 streamlit-card>=1.0.0
 st-dialog-close-detector>=0.1.0
 streamlit-js-eval>=0.1.7
+streamlit-javascript>=0.1.0
+user-agents>=2.0.0
 
 # Data processing and visualization
 pandas>=2.1.0
