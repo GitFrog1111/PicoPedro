@@ -88,6 +88,7 @@ st.set_page_config(
 ua_string = str(st_javascript("""window.navigator.userAgent;"""))
 user_agent = (parse(ua_string))
 st.session_state.is_session_pc = bool(user_agent.is_pc)
+time.sleep(1)
 if not st.session_state.is_session_pc:
     st.title('Mobile site currently under construction 👷‍♂️🏗')
     st.write('Please visit on desktop :)')
@@ -1656,6 +1657,22 @@ def IterateProfilePicture(direction):
     st.session_state.ProfilePictureIndex = st.session_state.ProfilePictureIndex % 3
     st.session_state.player['ProfilePicture'] = st.session_state.ProfilePictureIndex
 
+def RenderGoogleChip():
+    GoogleChipColumns = st.columns([1, 5, 1])
+    with GoogleChipColumns[0]:
+        st.image(st.user.picture)
+        #st.markdown(f"<img src='f'{BaseUrl}GoogleLogoStatic.png' style='width: 20px; height: 20px;'>", unsafe_allow_html=True)
+    with GoogleChipColumns[1]:
+        st.write("Signed in with Google")
+        st.markdown(f"<p style='text-align: left; margin-top: -20px; color: #7c7d93;'>{st.user.email}</p>", unsafe_allow_html=True)
+    with GoogleChipColumns[2]:
+        #st.image("f'{BaseUrl}GoogleLogoStatic.png")
+        st.container(border=False, height=1)
+        st.markdown(f"<img src='{BaseUrl}GoogleLogoStatic.png' style='width: 20px; height: 20px; margin-left: 20px; margin-top: -10px;'>", unsafe_allow_html=True)
+    if st.button("Logout", icon=":material/logout:", key="LogoutBut", use_container_width=True, type="secondary"):
+        st.logout()
+        st.rerun()
+
 @st.dialog("My Account")
 def AccountModal():
     with st.form("AccountForm", border = False):
@@ -1775,20 +1792,8 @@ def AccountModal():
         st.container(border=False, height=1)
     
     with st.container(border=True):
-        GoogleChipColumns = st.columns([1, 5, 1])
-        with GoogleChipColumns[0]:
-            st.image(st.user.picture)
-            #st.markdown(f"<img src='f'{BaseUrl}GoogleLogoStatic.png' style='width: 20px; height: 20px;'>", unsafe_allow_html=True)
-        with GoogleChipColumns[1]:
-            st.write("Signed in with Google")
-            st.markdown(f"<p style='text-align: left; margin-top: -20px; color: #7c7d93;'>{st.user.email}</p>", unsafe_allow_html=True)
-        with GoogleChipColumns[2]:
-            #st.image("f'{BaseUrl}GoogleLogoStatic.png")
-            st.container(border=False, height=1)
-            st.markdown(f"<img src='{BaseUrl}GoogleLogoStatic.png' style='width: 20px; height: 20px; margin-left: 20px; margin-top: -10px;'>", unsafe_allow_html=True)
-        if st.button("Logout", icon=":material/logout:", key="LogoutBut", use_container_width=True, type="secondary", disabled=st.session_state.isLoading):
-            st.logout()
-            st.rerun()
+        RenderGoogleChip()
+        
     #st.markdown(f"<p style='text-align: center; color: #7c7d93;'>{st.user.email}</p>", unsafe_allow_html=True)
 
 
@@ -2752,16 +2757,26 @@ def OutOfEggs():
         st.logout()
         st.rerun()
 
-@st.dialog(" ")
+@st.dialog("👋 Welcome Back!")
 def ReturningUser():
-    st.title("👋 Welcome back to PocketParis.io")
-    st.write("A world of conversations in your pocket!")
-    #st.json(st.session_state.player)
     
-
-    if st.button("logout"):
-        st.logout()
-        st.rerun()
+    st.container(border=False, height=50)
+    logocol = st.columns([1, 2, 1])
+    with logocol[1]:
+        st.image("static/PicoLogo.png", use_container_width=True)
+    #st.container(border=False, height=1)
+    cols = st.columns([1, 1, 1, 1])
+    with cols[1]:
+        if st.button("New Game", use_container_width=True, type="primary"):
+            #NewGame()
+            st.rerun()
+    with cols[2]:
+        st.button("Continue", use_container_width=True, type="secondary", disabled=True, help="Coming soon")
+    
+    st.container(border=False, height=100)
+    with st.container(border=True):
+        RenderGoogleChip()
+    #st.json(st.session_state.player)
 
 
 def CheckSub():
