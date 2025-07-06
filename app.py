@@ -85,19 +85,15 @@ st.set_page_config(
     
 )
 
-@st.dialog(" ")
-def MobileDialog():
-    st.title('👷‍♂️Mobile site currently under construction 🏗')
-    st.write('Please visit on desktop')
-    time.sleep(10)
-    st.stop()
-
 ua_string = st_javascript("""window.navigator.userAgent;""")
 user_agent = parse(ua_string)
 st.session_state.is_session_pc = user_agent.is_pc
 if not st.session_state.is_session_pc:
-    MobileDialog()
+    st.title('👷‍♂️Mobile site currently under construction 🏗')
+    st.write('Please visit on desktop')
+    time.sleep(1000)
     st.stop()
+
 
 
 def NewGame():
