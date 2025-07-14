@@ -78,7 +78,7 @@ if "isLoading" not in st.session_state:
 
 st.set_page_config(
     page_title="PicoPedro",
-    page_icon="🗺",
+    page_icon="static/Logos/Badge_Tiny.png",
     layout="wide",
     menu_items=None,
     initial_sidebar_state="collapsed",
@@ -133,6 +133,9 @@ hide_st_style = """
             </style>
             """
 st.markdown(hide_st_style, unsafe_allow_html=True)
+
+#hide anchors
+st.html("<style>[data-testid='stHeaderActionElements'] {display: none;}</style>")
 
 # Function to load and apply CSS
 def load_css(file_name):
@@ -282,7 +285,7 @@ def Main():
 
     #debug write conversation
     #st.session_state.Conversation
-    FAQ()
+    #FAQ()
 
     SoundPlayer()
 
@@ -1752,9 +1755,9 @@ def AccountModal():
             GenderOptions = ["Not set", "Male", "Female", "Other"]
             print("playyergender: ", st.session_state.player['Gender'])
             st.session_state.player['Gender'] = st.selectbox("Gender", options=GenderOptions, index=GenderOptions.index(st.session_state.player['Gender']), label_visibility="collapsed")
-            st.session_state.player['Volume'] = st.slider("Volume", min_value=0, max_value=100, value=int(st.session_state.player['Volume']), label_visibility="collapsed")
+            #st.session_state.player['Volume'] = st.slider("Volume", min_value=0, max_value=100, value=int(st.session_state.player['Volume']), label_visibility="collapsed")
         
-        st.session_state.player['GameTheme'] = st.text_area("Game Theme", value=st.session_state.player['GameTheme'], placeholder="Describe the world you want to explore (e.g., 'Medieval fantasy kingdom', 'Modern Tokyo', 'Space station')...", label_visibility="collapsed", height=90)
+        st.session_state.player['GameTheme'] = st.text_area("Game Theme", value=st.session_state.player['GameTheme'], placeholder="'Realistic modern', 'Medieval fantasy', 'Sherlock Holmes' etc...", label_visibility="collapsed", height=90)
 
         Submit = st.form_submit_button("Save Settings", icon = ":material/check:", type = "primary", use_container_width=True, disabled=st.session_state.isLoading)
         if Submit:
@@ -1788,7 +1791,7 @@ def AccountModal():
             st.container(border=False, height=1)
             st.link_button("Manage", icon = ":material/open_in_new:", url = "https://billing.stripe.com/p/login/test_fZucN51FVfbi06H1OG4c800", use_container_width=True, disabled= not st.session_state.player['IsSubscribed'], type = "secondary")
         #Pedropremium image
-        st.markdown(f"<img src='{BaseUrl}PedroPremium.png' style='width: 100%; height: 100%; border-radius: 8px; border: 0px solid #E8EAF1;'>", unsafe_allow_html=True)
+        st.markdown(f"<img src='{BaseUrl}PachoPro.png' style='width: 100%; height: 100%; border-radius: 8px; border: 0px solid #E8EAF1;'>", unsafe_allow_html=True)
         st.container(border=False, height=1)
     
     with st.container(border=True):
@@ -2308,7 +2311,7 @@ def renderMainUI():
         # st.container(border=False, height=10)
         #st.markdown(f"<b><h5 style='text-align: center; color: black;'>{st.session_state.POI['Name']}</h5></b>", unsafe_allow_html=True)
         #st.container(border=False, height=5)
-        st.markdown(f""" <img src='app/static/PicoLogo.png' style="width: 15%; height: 15%; margin-top: -120px; display: block; margin-left: auto; margin-right: auto;"> """, unsafe_allow_html=True)
+        st.markdown(f""" <img src='app/static/Logos/Logo_Med.png' style="width: 15%; height: 15%; margin-top: -120px; display: block; margin-left: auto; margin-right: auto;"> """, unsafe_allow_html=True)
         st.markdown(f"<b><h5 style='text-align: center; color: black; margin-top: -50px; margin-left: 20px;'>{st.session_state.POI['Name']}</h5></b>", unsafe_allow_html=True)
         st.session_state.POI['Empty'] = st.empty()
         
@@ -2379,7 +2382,7 @@ def renderMainUI():
             DisplayUserBox()
 
                           #pad, tutorbutton, vocabbutton, pad, cbox, pad, pad
-    bottombar = st.columns([1,       4,           4,      20,   30,   28,  1])
+    bottombar = st.columns([1,       4,           5,      19,   30,   28,  1])
     #Tutor button
     if st.session_state.isLoading == False:
         with bottombar[1]:
@@ -2763,15 +2766,11 @@ def ReturningUser():
     st.container(border=False, height=50)
     logocol = st.columns([1, 2, 1])
     with logocol[1]:
-        st.image("static/PicoLogo.png", use_container_width=True)
+        st.image("static/Logos/Logo_Med.png", use_container_width=True)
     #st.container(border=False, height=1)
-    cols = st.columns([1, 1, 1, 1])
-    with cols[1]:
-        if st.button("New Game", use_container_width=True, type="primary"):
-            #NewGame()
-            st.rerun()
-    with cols[2]:
-        st.button("Continue", use_container_width=True, type="secondary", disabled=True, help="Coming soon")
+
+    st.container(border=False, height=10)
+    st.markdown(f"<p style='text-align: center; color: grey; margin-top: -1px; font-size: 14px;'>Press spacebar to begin</p>", unsafe_allow_html=True)
     
     st.container(border=False, height=100)
     with st.container(border=True):
@@ -2898,7 +2897,7 @@ else:
     _, center, __ = st.columns([3, 5, 3])
     with center:
         st.container(border=False, height=30)
-        st.image("static/PicoLogo.png", use_container_width=True)
+        st.image("static/Logos/Logo_Med.png", use_container_width=True)
         _, a, b, _ = st.columns(4)
         with a:
             if st.button("Login", icon=":material/person:", key="LoginBut", use_container_width=True, type="secondary", disabled=st.session_state.isLoading):
