@@ -4,13 +4,11 @@ backgroundColor="#FFFFFF"
 secondaryBackgroundColor="#F0F2F6"
 textColor="#25274B"
 
-
 [client]
 toolbarMode = "minimal"
-
 
 [server]
 enableStaticServing = true
 
 [secrets]
-files = [ "~/.streamlit/secrets.toml", "/etc/secrets/secrets.toml",]
+files = ["~/.streamlit/secrets.toml", "/etc/secrets/secrets.toml",]

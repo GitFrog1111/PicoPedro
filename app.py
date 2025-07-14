@@ -1233,7 +1233,7 @@ def character_chat(Character):
                                 
                                 st.container(border=False, height = 1)
                                 if HelpText.upper() == '✔':
-                                    st.markdown(f"<p style='text-align: left; color: #B762FB; margin-top: -75px; margin-left: -90px; font-size: 25px;'>✔</p>", unsafe_allow_html=True)
+                                    st.markdown(f"<p style='text-align: left; color: #B762FB; margin-top: -75px; margin-left: -70px; font-size: 25px;'>✔</p>", unsafe_allow_html=True)
                                 else:
                                     st.markdown(f"<p style='text-align: center; color: grey; margin-top: 50px; font-size: -1px;'> </p>", unsafe_allow_html=True, help = HelpText)
                                     st.markdown(f"<p style='text-align: center; color: orange; margin-top: -75px; margin-left: -90px; font-size: 25px;'>•</p>", unsafe_allow_html=True)
