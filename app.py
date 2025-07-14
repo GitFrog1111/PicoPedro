@@ -719,12 +719,17 @@ def new_character_from_message(name):
 def ChangeMoney(tool):
     amount = float(tool['variables'][0])
     print('amount: ', amount)
+    if st.session_state.player['Money'] + amount < 0:
+        st.session_state.Conversation.append({"role": "assistant", "content": f"<thinking> Oops, looks like You don't have enough money to do that\nTool aborted\nmoney: {st.session_state.player['Money']}</thinking>"})
+        AI(st.session_state.Conversation)
+        return
     st.session_state.player['Money'] += amount
     print('st.session_state.player: ', st.session_state.player['Money'])
     data_to_update = {
         "Money": st.session_state.player['Money']
     }
-    BaserowDB("update row", "Users", st.session_state.player['ID'], Data=data_to_update)
+    #update the money in the database
+    #BaserowDB("update row", "Users", st.session_state.player['ID'], Data=data_to_update)
     if amount > 0:
         st.session_state.NotiBuffer.append([f"💸 +{Currencylookup.get(st.session_state.player.get('LearningLanguage', 'English'), '€')}{amount}", "paymentChime.mp3"])
     else:
@@ -922,12 +927,6 @@ def ProcessCommand(command):
     #st.success(f"🤖 {response}")
     print(response)
     return character_to_chat
-
-@st.dialog(" ")
-def SubscribePrompt():
-    st.title("💰 Subscribe to PocketParis.io")
-    st.write("Subscribe to PocketParis.io to continue your journey!")
-    st.write("Subscribe to PocketParis.io to continue your journey!")
 
 def ChangeEggs(amount):
     #apply the change
@@ -1234,7 +1233,7 @@ def character_chat(Character):
                                 
                                 st.container(border=False, height = 1)
                                 if HelpText.upper() == '✔':
-                                    st.markdown(f"<p style='text-align: left; color: dark-grey; margin-top: 2px; margin-left: 5px; font-size: 13px;'>💎</p>", unsafe_allow_html=True)
+                                    st.markdown(f"<p style='text-align: left; color: #B762FB; margin-top: -75px; margin-left: -90px; font-size: 25px;'>✔</p>", unsafe_allow_html=True)
                                 else:
                                     st.markdown(f"<p style='text-align: center; color: grey; margin-top: 50px; font-size: -1px;'> </p>", unsafe_allow_html=True, help = HelpText)
                                     st.markdown(f"<p style='text-align: center; color: orange; margin-top: -75px; margin-left: -90px; font-size: 25px;'>•</p>", unsafe_allow_html=True)
@@ -1802,13 +1801,12 @@ def AccountModal():
 
 @st.dialog(" ")
 def Subscribe_modal():
-    st.title("Subscribe to PocketParis+")
-    st.write("Subscribe to PocketParis+ to get unlimited playtime!")
-    st.write("£5.99/month")
-    st.write("Cancel anytime")
-    st.write("No commitment")
+    st.title("Subscribe to PACHO PRO")
+    st.write("✔ Infinite locations")
+    st.write("✔ Unlimited daily playtime")
+    st.write("✔ Kick the apps and enjoy learning again")
     add_auth(
-        subscription_button_text="Subscribe - £5.99/month",
+        subscription_button_text="Subscribe - £9.99/month",
         button_color="#9D4EDD",
         required=False,
         on_success=lambda: st.rerun()
@@ -2708,9 +2706,9 @@ def Onboarding(id = None):
             
             langcols = st.columns(2)
             with langcols[0]:
-                Nativelang = st.selectbox("I normally speak", options=["English", "French", "German", "Italian", "Spanish", "Portuguese", "Russian", "Chinese", "Japanese", "Korean", "Vietnamese", "Indonesian", "Malay", "Filipino"], index=0)
+                Nativelang = st.selectbox("I normally speak", options=["English", "French", "German"], index=0)
             with langcols[1]:
-                Learninglang = st.selectbox("I want to learn", options=["English", "French", "German", "Italian", "Spanish", "Portuguese", "Russian", "Chinese", "Japanese", "Korean", "Vietnamese", "Indonesian", "Malay", "Filipino"], index=1)
+                Learninglang = st.selectbox("I want to learn", options=["English", "French", "German"], index=1)
 
 
             Difficulty = st.select_slider("Difficulty", options=st.session_state.DifficultyOptions, value=3)
@@ -2907,7 +2905,7 @@ else:
                 st.login(provider="google")
 
 if "SupportedLanguages" not in st.session_state:
-    st.session_state.SupportedLanguages = ["English", "French", "German", "Italian", "Spanish", "Portuguese", "Russian", "Chinese", "Japanese", "Korean", "Vietnamese", "Indonesian", "Malay", "Filipino"]
+    st.session_state.SupportedLanguages = ["English", "French", "German"]
 
 if 'DifficultyOptions' not in st.session_state:
     st.session_state.DifficultyOptions = ["Completely New", "I know some basics", "Beginner", "Conversational", "Intermediate", "Advanced", "Fluent"]
