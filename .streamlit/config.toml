@@ -11,4 +11,4 @@ toolbarMode = "minimal"
 enableStaticServing = true
 
 [secrets]
-files = ["~/.streamlit/secrets.toml", "/etc/secrets/secrets.toml",]
+files = [".streamlit/secrets.toml", "/etc/secrets/secrets.toml",]

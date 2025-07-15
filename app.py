@@ -30,8 +30,6 @@ from streamlit_javascript import st_javascript
 from user_agents import parse
 
 
-
-
 if 'FirstRun' not in st.session_state:
     st.session_state.FirstRun = True
     print(f"""
@@ -45,6 +43,7 @@ if 'FirstRun' not in st.session_state:
 {time.time()}
 
 """)
+    
 
 if 'Rerun' not in st.session_state:
     print(f"""
@@ -77,7 +76,7 @@ if "isLoading" not in st.session_state:
     st.session_state.isLoading = True # Default to True for initial app load
 
 st.set_page_config(
-    page_title="PicoPedro",
+    page_title="PICOPACHO",
     page_icon="static/Logos/Badge_Tiny.png",
     layout="wide",
     menu_items=None,
@@ -445,7 +444,26 @@ def handle_tools(tools):
     return character_to_chat
     #st.session_state.isLoading = False
 
+def ImageColorCorrect(Image):
+        #download image to static/POI.png
+        img = requests.get(Image)
+        img.raise_for_status()
+        img_data = img.content
+        img_name = f"ProcessingPOI.png"
+        with open(img_name, "wb") as f:
+            f.write(img_data)
+        #do the pillow stuff
 
+        from pillowimageedit import apply_mask
+        apply_mask(
+            base_image_path=img_name,
+            output_path="static/POI.png",
+            brightness=1.075,
+            contrast=0.95,
+            color=1,
+            sharpness=0.1
+        )
+        
 
 ### Tools ###
 def new_poi(tool):
@@ -476,32 +494,16 @@ def new_poi(tool):
         #2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel, 3d rendering. detailed and varied, asymmetrical.
         #Image = 'CityGates.png'
 
-        #download image to static/POI.png
-        img = requests.get(Image)
-        img.raise_for_status()
-        img_data = img.content
-        img_name = f"ProcessingPOI.png"
-        with open(img_name, "wb") as f:
-            f.write(img_data)
-        #do the pillow stuff
-        from pillowimageedit import apply_mask
-        apply_mask(
-            base_image_path=img_name,
-            output_path="static/POI.png",
-            brightness=1.075,
-            contrast=0.95,
-            color=1,
-            sharpness=0.1
-        )
-        Image = "static/POI.png"
+        #Apply mask to image
+        ImageColorCorrect(Image)
 
-        print('printing image: ', Image)
+        #print('printing image: ', Image)
         st.session_state.POI["Image"] = Image
         st.session_state.POI["Name"] = poi_name
         st.session_state.POI["Prompt"] = poi_prompt
         st.session_state.POI["Coordinates"] = poi_coordinates
         print(st.session_state.POI["Image"])
-        st.session_state.POI['Empty'].image(st.session_state.POI["Image"])
+        
         # Create a new dictionary for the POI to be added to the list
         new_poi_entry = {
             "Image": Image,
@@ -548,12 +550,15 @@ def load_poi(tool):
         for poi in st.session_state.PoiList:
             if poi['Name'].upper() == target_poi_name.upper():
                 print ("poi found")
+
+                ImageColorCorrect(poi['Image'])
+
                 st.session_state.POI['Image'] = poi['Image']
                 st.session_state.POI['Name'] = poi['Name']
                 #st.session_state.POI['Description'] = poi['Description']
                 st.session_state.POI['Prompt'] = poi['Prompt']
                 st.session_state.POI['Coordinates'] = poi['Coordinates']
-                st.session_state.POI['Empty'].image(st.session_state.POI["Image"])
+                print('poi image: ', st.session_state.POI['Image'])
     else:
         st.session_state.Conversation.append({"role": "assistant", "content": f"Poi '{tool['variables'][0]}' not found, check your list of POIs"})
 
@@ -2309,10 +2314,9 @@ def renderMainUI():
         # st.container(border=False, height=10)
         #st.markdown(f"<b><h5 style='text-align: center; color: black;'>{st.session_state.POI['Name']}</h5></b>", unsafe_allow_html=True)
         #st.container(border=False, height=5)
-        st.markdown(f""" <img src='app/static/Logos/Logo_Med.png' style="width: 15%; height: 15%; margin-top: -120px; display: block; margin-left: auto; margin-right: auto;"> """, unsafe_allow_html=True)
-        st.markdown(f"<b><h5 style='text-align: center; color: black; margin-top: -50px; margin-left: 20px;'>{st.session_state.POI['Name']}</h5></b>", unsafe_allow_html=True)
+        st.markdown(f""" <img src='app/static/Logos/Logo_Blackout_Med.png' style="width: 20%; height: 20%; margin-top: -120px; display: block; margin-left: auto; margin-right: auto;"> """, unsafe_allow_html=True)
+        st.markdown(f"<b><h5 style='text-align: center; color: black; margin-top: -20px;'>{st.session_state.POI['Name']}</h5></b>", unsafe_allow_html=True)
         st.session_state.POI['Empty'] = st.empty()
-        
         with st.session_state.POI['Empty']:
             with st.container(border=False, height=475):
                 if st.session_state.isLoading == True:
@@ -2334,32 +2338,17 @@ def renderMainUI():
                     LoaderHint()
                 if st.session_state.isLoading == False:
 
-                    st.session_state.POI['Empty'].image(st.session_state.POI["Image"])
+                    #st.session_state.POI['Empty'].image(st.session_state.POI["Image"])
                     
+                    st.session_state.POI['Empty'].image("static/POI.png")
                     if 'Arrived' not in st.session_state:
-                        st.session_state.Arrived = False
+                        st.session_state.Arrived = True
                     if st.session_state.Arrived == False:
                         SoundEngine(f"arriving{random.randint(1, 2)}.mp3")
                         st.session_state.Arrived = True #only play once
 
         
 
-
-
-        #st.markdown("![Alt Text](https://s3.ezgif.com/tmp/ezgif-3e887b7b0f0215.gif)")
-        #st.video(video_bytes, loop=True, autoplay=True, muted=True)
-        
-        #st.image('CityGates.png')
-        # Command =  st.text_input("CBox", key="CommandBox", placeholder="What do you want to do?", label_visibility="hidden")
-        # if Command:
-        #     ProcessCommand(Command)
-
-
-        
-                #ProcessCommand(prompt)
-                #st.session_state.isLoading = False
-
-    #st.divider()
 
     def DisplayUserBox():
         if st.session_state.UserBox == "none":
@@ -2679,8 +2668,8 @@ def LoaderHint():
         
         if hintType == "SelfPromo":
             Messages = [
-                "@pocketparis on X for updates!",
-                "Please give feedback on Pocket paris to improve the game! (pocketparis@gmail.com)",
+                "@PICOPACHO on X for updates!",
+                "Please give feedback on PICOPACHO to improve the game! (picopacho@gmail.com)",
             ]
             ChosenMessage = random.choice(Messages)
             return st.markdown(f"<p style='text-align: center; color: grey; margin-top: -1px; font-size: 14px;'>{ChosenMessage}</p>", unsafe_allow_html=True)
@@ -2697,7 +2686,7 @@ def Onboarding(id = None):
         st.session_state.onboarding_step = 1
 
     if st.session_state.onboarding_step == 1:
-        st.title("👋 Welcome to PocketParis.io")
+        st.title("👋 Welcome to PICOPACHO.io")
         st.write("A world of conversations in your pocket!")
         
         with st.container(border=False):
@@ -2742,7 +2731,7 @@ def OutOfEggs():
     minutes = (hours-int(hours))*60
 
     st.title("Out of Stars!")
-    st.write(f"Thanks for trying out PocketParis.io! Your free trial credits reset in {int(hours)} hours")
+    st.write(f"Thanks for trying out PICOPACHO.io! Your free trial credits reset in {int(hours)} hours")
     st.write("Dont want to wait? Subscribe for unlimited playtime!")
     add_auth(
     required=True,  # Don't stop the app for non-subscribers
@@ -2950,13 +2939,13 @@ if 'DifficultyOptions' not in st.session_state:
 #         st.session_state.onboarding_step = 1
 
 #     if st.session_state.onboarding_step == 1:
-#         st.title("👋 Welcome to PocketParis")
+#         st.title("👋 Welcome to PICOPACHO")
 #         st.write("Please fill out the following information to continue.")
         
 #         with st.form("onboarding_step1_form"):
 #             user_name = st.text_input("Game name", value=st.user.name)
 #             user_gender = st.selectbox("Gender", options=["Not set", "Male", "Female", "Other"])
-#             user_goal = st.text_input("What do you want to get out of PocketParis?", placeholder="e.g. Learn French, Explore Paris, etc.")
+#             user_goal = st.text_input("What do you want to get out of PICOPACHO?", placeholder="e.g. Learn French, Explore Paris, etc.")
 
 #             submitted = st.form_submit_button("Continue", use_container_width=True, type="primary")
 #             if submitted:
