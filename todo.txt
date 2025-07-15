@@ -1,28 +1,19 @@
-new game on welcome back screen
-
+app:
+one last crack at sounds
+reexport professor pacho fix line on left
+try new loading anim
+tidy up missions display fix weird bumping down- markdown
 fix onboarding (difficulty slider broke)
 
-Add suggested game themes
 
-split up account modal into sections
+AND THEN LAUNCH!
+publish app on gauth
+leave testing mode in stripe
+make youtube
+market...
 
-improve inventory icon prompt
-
-add turn in to all mission chips and fix weird bumping down
-
-Sounds?!
-
-go live with stripe
-
-go live with googlecloud, add branding
-
-WEBSITE:
-remove dropshadow
-pin boat to right
-pass on the wordings
-we make speakers icons
-beta card color
-do something with header SHADCN?
-
-
-start discord start posting train leaves station
+stretch goals
+elevenlabs upgrade
+add langs
+parallel ai calls
+game saves

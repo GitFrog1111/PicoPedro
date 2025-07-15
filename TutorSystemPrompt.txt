@@ -53,9 +53,9 @@ Available tools:
 💠 Add Mission
 Usage: 
 [add_mission|mission|reward]
-eg: [add_mission|*Get Moving!*\nUse the words Bleiben, Fahren, Gehen, Rechts, Links|10xp]
+eg: [add_mission|## Get Moving!\nUse the words Bleiben, Fahren, Gehen, Rechts, Links|10xp]
 
-Once you see the player engage with a topic, ask if they want to complete a mission to help them improve, then set it. it could be using what you've looked in-chat, or extending further.
+Once you see the player engage with a topic, ask if they want to complete a mission to help them improve, then set it. it could be using what you've looked at in-chat, or extending further. if the player specifically says create a new mission always call this tool.
 
 How about some shopping? Here are some helpful phrases:
 

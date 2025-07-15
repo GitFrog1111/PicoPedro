@@ -489,7 +489,7 @@ def new_poi(tool):
         
         #Image = fal(f'2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel, 3d rendering. detailed and varied, asymmetrical. organic shapes, point of interest: {poi_name}. {poi_prompt}')
         #Image = fal_poi(f"point of interest:{poi_name}, isometric point of interest, detailed map tile, pixel art, medieval rpg pixel art game, moody, cinematic, gritty, {poi_prompt}")
-        Image = fal_poi(f"point of interest:{poi_name}, {st.session_state.player['LearningLanguage']} isometric point of interest, detailed map tile, pixel art, pixel art game, moody, cinematic, gritty, {poi_prompt}, 2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel. detailed and varied, asymmetrical.")
+        Image = fal_poi(f"{poi_name}, {st.session_state.player['LearningLanguage']} isometric point of interest, detailed map tile, pixel art, pixel art game, moody, cinematic, gritty, {poi_prompt}, 2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel. detailed and varied, asymmetrical.")
 
         #2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel, 3d rendering. detailed and varied, asymmetrical.
         #Image = 'CityGates.png'
@@ -571,7 +571,7 @@ def new_item(tool):
         st.session_state.NotiBuffer.append([f"🎒 New Item: {item_name}", "inventory3.mp3"])
         #st.toast(f"🎒 New Item: {item_name}")
         img = 'CityGates.png'
-        img = fal_icon(f'PixArFK style, a single {item_name}, white background, game item icon, pixel art.')
+        img = fal_item(f'a single pixel art {item_name}, white background, game item, full WHITE BG, game 2d texture, {item_image_prompt}')
         #st.success(f"💰 New Item Created: Name='{item_name}', Description='{item_description}', Image Prompt='{item_image_prompt}'")
         st.session_state.inventory.append({"name": item_name, "description": item_description, "image": img})
 
@@ -747,6 +747,36 @@ def on_queue_update(update):
                 print(log["message"])
 
 
+def fal_item(prompt):
+    #fal-ai/hidream-i1-full
+    #fal-ai/imagen4/preview
+    uploadimage = f"data:image/png;base64,{open('imageguide1.txt', 'r').read()}"
+    result = fal_client.subscribe(
+        "fal-ai/hidream-i1-fast",
+        arguments={
+        "prompt": prompt,
+        "negative_prompt": "frame, border, edging, spritesheet, Text, duplicate, multiple subjects, blurry, trees, detailed background, hud, outside, grass, sky, background, text, title, words, typography, symmetrical",
+        "image_size": {
+            "height": 512,
+            "width": 512
+        },
+        "num_inference_steps": 16, #25
+        "num_images": 1,
+        "enable_safety_checker": True,
+        "output_format": "jpeg",
+        },
+        with_logs = True,
+        on_queue_update = on_queue_update
+        
+    )
+    if result['images'][0]['url']:
+        ChangeEggs(-1)
+    print(result['images'][0]['url'])
+    return result['images'][0]['url']
+
+
+
+
 def fal_icon_LOW(prompt):
     return f'{BaseUrl}placeholders/Dog.png'
 def fal_icon(prompt):
@@ -815,12 +845,12 @@ def fal_poi(prompt):
         "fal-ai/hidream-i1-full/image-to-image",
         arguments={
         "prompt": prompt,
-        "negative_prompt": "Text, ui, game ui,label, words, title, caption, border, 3d, dark border, poster, vignette, cast shadow, harsh sun lamp",
+        "negative_prompt": "Text, ui, game ui, label, words, title, caption, border, dark border, poster, vignette, cast shadow, harsh sun lamp",
         "image_url": uploadimage,
         "strength": 0.9,
         "image_size": {
-            "height": 1024,
-            "width": 1024
+            "height": 512,
+            "width": 512
         },
         "num_inference_steps": 18, #25
         "guidance_scale": 6,
@@ -1100,7 +1130,7 @@ def Fakestream(text):
             time.sleep(rand/50)
             yield char
         
-def speechtotext(recording):
+def speechtotext(recording, Character):
     from openai import OpenAI
 
     client = OpenAI(api_key=openai_api_key)
@@ -1109,7 +1139,7 @@ def speechtotext(recording):
     transcription = client.audio.transcriptions.create(
         model="gpt-4o-transcribe", 
         file=audio_file,
-        prompt= f"The person is speaking in {st.session_state.player['LearningLanguage']}possibly {st.session_state.player['NativeLanguage']}. transcribe exactly what they say without corrections."
+        prompt= f"The person is speaking in {st.session_state.player['LearningLanguage']}, possibly {st.session_state.player['NativeLanguage']}. transcribe exactly what they say without corrections. The person is speaking to {Character.get('name', 'an unnamed character')}."
         
     )
     if transcription.text:
@@ -1238,7 +1268,8 @@ def character_chat(Character):
                                 
                                 st.container(border=False, height = 1)
                                 if HelpText.upper() == '✔':
-                                    st.markdown(f"<p style='text-align: left; color: #B762FB; margin-top: -75px; margin-left: -70px; font-size: 25px;'>✔</p>", unsafe_allow_html=True)
+                                    #empty placeholder
+                                    st.markdown(f"<p style='text-align: left; color: #FFFFFF; margin-top: -10px; margin-left: -40px; font-size: 16px;'> </p>", unsafe_allow_html=True)
                                 else:
                                     st.markdown(f"<p style='text-align: center; color: grey; margin-top: 50px; font-size: -1px;'> </p>", unsafe_allow_html=True, help = HelpText)
                                     st.markdown(f"<p style='text-align: center; color: orange; margin-top: -75px; margin-left: -90px; font-size: 25px;'>•</p>", unsafe_allow_html=True)
@@ -1265,7 +1296,7 @@ def character_chat(Character):
 
     if UserAudioInput:
         progress_bar.progress(0.1)
-        UserMessageText = speechtotext(UserAudioInput)
+        UserMessageText = speechtotext(UserAudioInput, Character.get('name', 'an unnamed character'))
         progress_bar.progress(0.3)
 
         # 1. Add user message to history
@@ -1375,7 +1406,6 @@ def Tutor_chat():
     if "vocabTables" not in st.session_state:
         st.session_state.vocabTables = []
     
-    
     def get_system_prompt():
         with open("TutorSystemPrompt.txt", "r", encoding="utf-8") as file:
             system_prompt = file.read()
@@ -1383,31 +1413,32 @@ def Tutor_chat():
         system_prompt = system_prompt + "\n\n" + str(st.session_state.Conversation)
         
         if "TutorHistory" not in st.session_state:
-            st.session_state.TutorHistory = [""]
-        st.session_state.TutorHistory[0] = {"role": "system", "content": system_prompt}
+            st.session_state.TutorHistory = []
+        st.session_state.TutorHistory.append({"role": "system", "content": system_prompt})
         return system_prompt
     get_system_prompt()
     
     def AppendStarting():
-        st.session_state.TutorHistory = []
-        st.session_state.TutorHistory.extend([{"role": "assistant", "content": "I'm here to help! What do you need assistance with?"}])
+        #st.session_state.TutorHistory = []
+        st.session_state.TutorHistory = [{"role": "assistant", "content": "What should we learn today?"}]
         
     if "TutorHistory" not in st.session_state:
         AppendStarting()
-    if len(st.session_state.TutorHistory) == 0:
+    
+    if len(st.session_state.TutorHistory) == 1:
         AppendStarting()
         
     imagecols = st.columns([2, 1, 2])
     with imagecols[1]:
         st.image(f"static/tutorgif.gif", use_container_width=True)
-    st.markdown("<p style='text-align: center; color: grey; margin-top: -12px;'>Pocket Tutor</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: grey; margin-top: -12px;'>Professor Pacho</p>", unsafe_allow_html=True)
     
     chat_container = st.container(border=True, height=300)
 
     for i, message in enumerate(st.session_state.TutorHistory):
         if message["role"] == "system":
             continue
-        avatar = st.session_state.player['Avatar'] if message["role"] == "user" else "💬"
+        avatar = st.session_state.player['Avatar'] if message["role"] == "user" else "✨"
         name = "you" if message["role"] == "user" else "assistant"
         
         # Check if this message contains tables (only for assistant messages)
@@ -1435,7 +1466,7 @@ def Tutor_chat():
             if has_tables and pin_col:
                 with pin_col:
                     st.container(border=False, height=10)
-                    if st.button("📌", key=f"pin_{i}", help="Pin", type="tertiary", disabled=st.session_state.isLoading):
+                    if st.button("📌", key=f"pin_{i}", help="Pin to view", type="tertiary", disabled=st.session_state.isLoading):
                         # Convert all tables in this message to DataFrames
                         message_tables = []
                         for table in tables:
@@ -1513,7 +1544,7 @@ def Tutor_chat():
         if st.button(prompt, key = "QR3", use_container_width=True, type="secondary", disabled=st.session_state.isLoading):
             Run(prompt)
     with quickresponsesB[1]:
-        prompt = "New mission"
+        prompt = "Create a new mission"
         if st.button(f"💠 {prompt}", key = "QR4", use_container_width=True, type="secondary", disabled=st.session_state.isLoading):
             Run(prompt)
 
@@ -1735,8 +1766,8 @@ def AccountModal():
             st.container(border=False, height=4)
             st.caption("Gender:")
             st.container(border=False, height=4)
-            st.caption("Volume:")
-            st.container(border=False, height=4)
+            #st.caption("Volume:")
+            #st.container(border=False, height=4)
             st.caption("Game Theme:")
             
         
@@ -2369,7 +2400,7 @@ def renderMainUI():
             DisplayUserBox()
 
                           #pad, tutorbutton, vocabbutton, pad, cbox, pad, pad
-    bottombar = st.columns([1,       4,           5,      19,   30,   28,  1])
+    bottombar = st.columns([1,       4,           4,      20,   30,   28,  1])
     #Tutor button
     if st.session_state.isLoading == False:
         with bottombar[1]:
@@ -2430,7 +2461,7 @@ def renderMainUI():
         with VocabEmpty:
             PinnedVocab()
         if st.session_state.pinnedVocab:
-            if st.button("", icon = ':material/notes:', key="showhidevocab", type="tertiary", disabled=st.session_state.isLoading):
+            if st.button("", icon = ':material/notes:', key="showhidevocab", type="tertiary", use_container_width=True, disabled=st.session_state.isLoading):
                 st.session_state.ShowVocab = not st.session_state.ShowVocab
                 PinnedVocab()
 
