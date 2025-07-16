@@ -2648,28 +2648,18 @@ def SoundPlayer():
                 
                 
 def SoundEngine(sound):
-    st.session_state.SoundBuffer.append(sound)
+    #return
+    with st.empty():
+        st.audio(f"static/sounds/{sound}", format="audio/mp3", autoplay=True)
+        time.sleep(2)
+        st.empty()
+
+    
+    
+    #st.session_state.SoundBuffer.append(sound)
 
     # with st.session_state.SoundPlayer:
     #     st.audio(f"{BaseUrl}sounds/{sound}", format="audio/mp3", autoplay=True)
-
-        
-
-
-
-    # time.sleep(1)
-    # channel = mixer.find_channel()
-    # if channel:
-    #     channel.set_volume(st.session_state.player['Volume']/100)
-    #     PlaySound = mixer.Sound(f"static/sounds/{sound}")
-    #     PlaySoundLength = PlaySound.get_length()*1000
-    #     channel.play(PlaySound)
-    #     channel.fadeout(int(PlaySoundLength))
-        
-    #     if PlaySoundLength >= 2000:
-    #         channel.fadeout(int(PlaySoundLength)-2000)
-
-    
 
 
 
