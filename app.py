@@ -24,6 +24,7 @@ import requests
 import json
 import math
 import os
+import asyncio
 
 from streamlit_js_eval import streamlit_js_eval
 from streamlit_javascript import st_javascript
@@ -458,9 +459,9 @@ def ImageColorCorrect(Image):
         apply_mask(
             base_image_path=img_name,
             output_path="static/POI.png",
-            brightness=1.075,
+            brightness=1.12,
             contrast=0.95,
-            color=1,
+            color=0.97,
             sharpness=0.1
         )
         
@@ -489,7 +490,9 @@ def new_poi(tool):
         
         #Image = fal(f'2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel, 3d rendering. detailed and varied, asymmetrical. organic shapes, point of interest: {poi_name}. {poi_prompt}')
         #Image = fal_poi(f"point of interest:{poi_name}, isometric point of interest, detailed map tile, pixel art, medieval rpg pixel art game, moody, cinematic, gritty, {poi_prompt}")
-        Image = fal_poi(f"{poi_name}, {st.session_state.player['LearningLanguage']} isometric point of interest, detailed map tile, pixel art, pixel art game, moody, cinematic, gritty, {poi_prompt}, 2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel. detailed and varied, asymmetrical.")
+        Image = fal_poi(f"{poi_name}, {st.session_state.player['LearningLanguage']} isometric point of interest, detailed map tile, pastel colour pallette, soft beautiful pixel art, rpg pixel art game, moody, cinematic, gritty, {poi_prompt}, 2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel. detailed and varied, asymmetrical.")
+
+        
 
         #2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel, 3d rendering. detailed and varied, asymmetrical.
         #Image = 'CityGates.png'
@@ -602,6 +605,7 @@ def new_character(tool):
             character_voice_id = "WAixHs5LYSwPVDJxQgN7"
 
         print('character_voice_id: ', character_voice_id)
+        #Image = fal_icon(f'PixArFK style, portrait of {character_name}, {character_description}, detailed background, game character icon, pixel art, shoulders-up shot, 3/4 view, jrpg style character icon of a {st.session_state.player["LearningLanguage"]} person')
         Image = fal_icon(f'PixArFK style, portrait of {character_name}, {character_description}, detailed background, game character icon, pixel art, shoulders-up shot, 3/4 view, jrpg style character icon of a {st.session_state.player["LearningLanguage"]} person')
         st.session_state.characters.append({"name": character_name, "description": character_description, "traits": character_traits, "image": Image, 'convoHistory': [], "POI": st.session_state.POI['Name'], "is_following": False, "voice_id": character_voice_id})
         # character_chat(st.session_state.characters[-1])
@@ -776,7 +780,6 @@ def fal_item(prompt):
 
 
 
-
 def fal_icon_LOW(prompt):
     return f'{BaseUrl}placeholders/Dog.png'
 def fal_icon(prompt):
@@ -840,7 +843,14 @@ def fal_poi_LOW(prompt):
 def fal_poi(prompt):
     #fal-ai/hidream-i1-full
     #fal-ai/imagen4/preview
-    uploadimage = f"data:image/png;base64,{open('imageguide1.txt', 'r').read()}"
+    #uploadimage = f"data:image/png;base64,{open('imageguide1.txt', 'r').read()}"
+
+    # Classic
+    uploadimage = 'https://v3.fal.media/files/koala/mA0RNDOoCzbz4gXzDJF40_imageguide1.png'
+
+    #fullscreen
+    #uploadimage = 'https://v3.fal.media/files/penguin/iC7xWsEIRjDCZrleDc0Fi_imageguide2.jpeg'
+
     result = fal_client.subscribe(
         "fal-ai/hidream-i1-full/image-to-image",
         arguments={
@@ -849,8 +859,8 @@ def fal_poi(prompt):
         "image_url": uploadimage,
         "strength": 0.9,
         "image_size": {
-            "height": 512,
-            "width": 512
+            "height": 768,
+            "width": 768
         },
         "num_inference_steps": 18, #25
         "guidance_scale": 6,
@@ -865,6 +875,13 @@ def fal_poi(prompt):
     if result['images'][0]['url']:
         ChangeEggs(-1)
     print(result['images'][0]['url'])
+
+
+    #uploader
+    #url = fal_client.upload_file('imageguide2.jpeg')
+    #print('Heres the uploadA', url)
+    
+    
     return result['images'][0]['url']
 
 
@@ -2778,7 +2795,7 @@ def OutOfEggs():
         st.logout()
         st.rerun()
 
-@st.dialog("👋 Welcome Back!")
+@st.dialog(" ")
 def ReturningUser():
     
     st.container(border=False, height=50)

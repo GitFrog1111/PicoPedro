@@ -55,4 +55,4 @@ def encode_image_to_base64_string_and_save(image_path: str, output_txt_file_path
         return False
 
 if __name__ == "__main__":
-    encode_image_to_base64_string_and_save("imageguide1.png", "output_b642.txt")
+    encode_image_to_base64_string_and_save("imageguide2.jpeg", "output_b642.txt")
