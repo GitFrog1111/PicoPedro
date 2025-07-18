@@ -258,7 +258,7 @@ def Main():
         st.session_state.NotiBuffer = []
     
     if 'ShowVocab' not in st.session_state:
-        st.session_state.ShowVocab = True
+        st.session_state.ShowVocab = False
     
     if 'pinnedVocab' not in st.session_state:
         st.session_state.pinnedVocab = None
@@ -305,6 +305,8 @@ def Main():
     # if st.session_state.isLoading: # If true (typically after initial setup and AI calls)
     #     st.session_state.isLoading = False
     #     st.rerun() # Rerun to reflect the new isLoading state and enable UI
+
+    SoundPlayer()
     debug()
 
 
@@ -488,7 +490,7 @@ def new_poi(tool):
         
         #Image = fal(f'2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel, 3d rendering. detailed and varied, asymmetrical. organic shapes, point of interest: {poi_name}. {poi_prompt}')
         #Image = fal_poi(f"point of interest:{poi_name}, isometric point of interest, detailed map tile, pixel art, medieval rpg pixel art game, moody, cinematic, gritty, {poi_prompt}")
-        Image = fal_poi(f"{poi_name}, {st.session_state.player['LearningLanguage']} isometric point of interest, detailed map tile, pastel colour pallette, soft beautiful pixel art, rpg pixel art game, moody, cinematic, gritty, {poi_prompt}, 2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel. detailed and varied, asymmetrical.")
+        Image = fal_poi_LOW(f"{poi_name}, {st.session_state.player['LearningLanguage']} isometric point of interest, detailed map tile, pastel colour pallette, soft beautiful pixel art, rpg pixel art game, moody, cinematic, gritty, {poi_prompt}, 2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel. detailed and varied, asymmetrical.")
 
         
 
@@ -604,7 +606,7 @@ def new_character(tool):
 
         print('character_voice_id: ', character_voice_id)
         #Image = fal_icon(f'PixArFK style, portrait of {character_name}, {character_description}, detailed background, game character icon, pixel art, shoulders-up shot, 3/4 view, jrpg style character icon of a {st.session_state.player["LearningLanguage"]} person')
-        Image = fal_icon(f'PixArFK style, portrait of {character_name}, {character_description}, detailed background, game character icon, pixel art, shoulders-up shot, 3/4 view, jrpg style character icon of a {st.session_state.player["LearningLanguage"]} person')
+        Image = fal_icon_LOW(f'PixArFK style, portrait of {character_name}, {character_description}, detailed background, game character icon, pixel art, shoulders-up shot, 3/4 view, jrpg style character icon of a {st.session_state.player["LearningLanguage"]} person')
         st.session_state.characters.append({"name": character_name, "description": character_description, "traits": character_traits, "image": Image, 'convoHistory': [], "POI": st.session_state.POI['Name'], "is_following": False, "voice_id": character_voice_id})
         # character_chat(st.session_state.characters[-1])
         
@@ -837,7 +839,7 @@ def fal_iconimg2img(prompt, image):
 
 
 def fal_poi_LOW(prompt):
-    return f'{BaseUrl}placeholders/CityGates.png'
+    return f'https://v3.fal.media/files/koala/mA0RNDOoCzbz4gXzDJF40_imageguide1.png'
 def fal_poi(prompt):
     #fal-ai/hidream-i1-full
     #fal-ai/imagen4/preview
@@ -2483,126 +2485,14 @@ def renderMainUI():
         
     with bottombar[4]:
         #st.container(border=False, height=1 )
-        suggestions = [
-            "Join cult",
-            "Go to kings palace",
-            "Travel to Mars",
-            "Hijack luxury yacht",
-            "Infiltrate secret society",
-            "Challenge champion",
-            "Negotiate peace treaty",
-            "Hack network",
-            "Tame wild griffin",
-            "Host underground rave",
-            "Explore caves",
-            "Train rebel fighters",
-            "Sabotage enemy pipeline",
-            "Build prototype car",
-            "Map underground tunnels",
-            "Stage royal assassination",
-            "Broker arms deal",
-            "Pilot jet",
-            "Sabotage enemy supply lines",
-            "Smuggle Contraband though border",
-            "Train Direwolf",
-            "Terraform Moon",
-            "enter drop pod",
-            "Paint floating skybridge mural",
-            "Hunt cybernetic Leviathan",
-            "Launch underground newspaper",
-            "Hack biometric security system",
-            "Build stealth recon drone",
-            "Rescue hostages from sky fortress",
-            "Plant spyware in government network",
-            "Explore hollow earth caverns",
-            "Forge alliance with werewolves",
-            "Steal secrets from AI overlord",
-            "Brew psychoactive mind elixir",
-            "Infiltrate virtual reality cult",
-            "Conduct black market auction",
-            "Race solar sail yacht",
-            "Map haunted space station",
-            "Recruit mercenaries for rebellion",
-            "Clone extinct jungle beast",
-            "Hijack autonomous cargo convoy",
-            "Decode time capsule broadcast",
-            "Lead expedition into nebula",
-            "Betray underworld crime lord",
-            "Pirate suborbital transport",
-            "Compose revolutionary opera",
-            "Discover lost undersea temple",
-            "Smuggle refugees across border",
-            "Program self-aware companion",
-            "Summon storm elemental",
-            "Trade secrets with alien envoy",
-            "Sabotage planetary defense grid",
-            "Train shadow assassin unit",
-            "Harvest moonlight crystals",
-            "Escort royal heir through wasteland",
-            "Operate hidden narcotics lab",
-            "Chart map of dreamscape realm",
-            "Host masquerade ball in ruins",
-            "Plant resistance cells in metropolis",
-            "Build floating spice market",
-            "Rewire cybernetic hive mind",
-            "Stage mutiny on void cruiser",
-            "Explore crystal dimension rift",
-            "Train virtual gladiator fighter",
-            "Mine antimatter from star core",
-            "Broker truce between dragon clans",
-            "Film documentary on ghost fleet",
-            "Defuse nuclear smuggling ring",
-            "Cultivate bioluminescent orchards",
-            "Decipher alien star charts",
-            "Run clandestine blackmail ring",
-            "Race through zero-g Speedway",
-            "Construct secret underground library",
-            "Chart underwater city map",
-            "Steal prototype energy core",
-            "Train psychic warhound",
-            "Broker galactic trade pact",
-            "Host street rave",
-            "Terraform Desert Moon",
-            "Decode ancient hieroglyphs",
-            "Race hyperloop freight pod",
-            "Negotiate release of quantum prisoner",
-            "Train band of rogue AI agents",
-            "Pilot interdimensional hot air balloon",
-            "Steal memory from ancient Titan",
-            "Chart ocean currents on Europa",
-            "Host puppet revolution in Megacity",
-            "Manufacture synthetic mythical beast",
-            "Map genetic code of cosmic virus",
-            "Organize cross-galaxy peace march",
-            "Engineer sentient living spaceship",
-            "Rally colony against corporate tyrant",
-            "Stage heist on celestial bank",
-            "Translate language of sentient trees",
-            "Build refugee sanctuary on Mars",
-            "Train squad of nano-assassins",
-            "Operate time-loop recon team",
-            "Plunder abandoned orbital graveyard",
-            "Go to coffeeshop",
-            "Go to mechanic",
-            "Go home",
-            "Go to gym",
-            "Go to bar",
-            "Go to club",
-            "Go to restaurant",
-            "Go to park",
-            "Order coffee",
-            "Buy Nvidia stock",
-            "Go to guitar lesson",
-            "Go to work",
-            "Clean room",
-            "Find toilet"            
-        ]
+
 
         suggestion = "What do you want to do?"
 
         st.markdown("<p style='text-align: center; color: grey; margin-top: -30px;'> </p>", unsafe_allow_html=True)
         prompt = st.chat_input(placeholder = suggestion, key = "promptbox", disabled=st.session_state.isLoading)
         if prompt:
+            #SoundEngine("sendmessage.mp3")
             st.session_state.isLoading = True
             st.session_state.Prompt = prompt
             print('prompt:', prompt)
@@ -2625,26 +2515,43 @@ def TimeUntil(unix_timestamp):
     # total seconds (or any other breakdown)
     return time_difference
 
-  
+
+
+
+def SoundPlayer():
+    while len(st.session_state.SoundBuffer) > 0:
+        sound = st.session_state.SoundBuffer.pop(0)
+        with st.empty():
+            with st.container(border=False, height=1):
+                st.container(border=False, height=20)
+                st.audio(f"static/sounds/{sound}", format="audio/mp3", autoplay=True)
+            time.sleep(2)
+            st.empty()
+    return
+
+
+if 'SoundBuffer' not in st.session_state:
+    st.session_state.SoundBuffer = []
+
+
 def SoundEngine(sound):
-    st_javascript(f"""
-    try {{
-        const audio = document.createElement('audio');
-        audio.src = 'app.picpacho.com/app/static/sounds/{sound}';
-        audio.autoplay = true;
-        audio.onended = () => {{
-            console.log("Audio ended, removing.");
-            audio.remove();
-        }};
-        audio.onerror = (e) => {{
-            console.error("Audio playback error:", e);
-        }};
-        document.body.appendChild(audio);
-        console.log("Audio element added:", audio.src);
-    }} catch (err) {{
-        console.error("JS Error:", err);
-    }}
-""")
+    st.session_state.SoundBuffer.append(sound)
+
+#     components.html(f"""
+# <script>
+#     try {{
+#         const audio = document.createElement('audio');
+#         audio.src = "{BaseUrl}sounds/{sound}";
+#         audio.autoplay = true;
+#         audio.onended = () => {{
+#             audio.remove();
+#         }};
+#         document.body.appendChild(audio);
+#     }} catch (err) {{
+#         console.error("Playback error:", err);
+#     }}
+# </script>
+# """, height=1)
 
 def LoaderHint():
     
