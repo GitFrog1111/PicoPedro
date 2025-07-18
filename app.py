@@ -2522,8 +2522,8 @@ def SoundPlayer():
     while len(st.session_state.SoundBuffer) > 0:
         sound = st.session_state.SoundBuffer.pop(0)
         with st.empty():
-            with st.container(border=False, height=1):
-                st.container(border=False, height=20)
+            with st.container(border=False, height=50):
+                st.container(border=False, height=10)
                 st.audio(f"https://app.picopacho.com/app/static/sounds/{sound}", format="audio/mp3", autoplay=True)
             time.sleep(2)
             st.empty()
