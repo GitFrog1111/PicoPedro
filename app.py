@@ -2629,13 +2629,15 @@ def TimeUntil(unix_timestamp):
 def SoundEngine(sound):
     #return
     try:
-        audio_player = f"""
-        <audio id="rand-audio{uuid.uuid1()}" autoplay>
-        <source src="{BaseUrl}sounds/{sound}" type="audio/mpeg">
-        </audio>
-        """
-
-        st.markdown(audio_player, unsafe_allow_html=True)
+        st_javascript(f"""
+            const audio = document.createElement('audio');
+            audio.src = '{BaseUrl}sounds/{sound}';
+            audio.autoplay = true;
+            audio.onended = () => {{
+                audio.remove();
+            }};
+            document.body.appendChild(audio);
+        """)
     except Exception as e:
         print('SoundEngine error:', e)
         return
