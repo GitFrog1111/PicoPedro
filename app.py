@@ -2627,18 +2627,12 @@ def TimeUntil(unix_timestamp):
 
   
 def SoundEngine(sound):
-    return
+    #return
     try:
         audio_player = f"""
-        <audio id="rand-audio" autoplay>
+        <audio id="rand-audio{uuid.uuid1()}" autoplay>
         <source src="{BaseUrl}sounds/{sound}" type="audio/mpeg">
         </audio>
-        <script>
-        const audio = document.getElementById('rand-audio');
-        audio.onended = () => {{
-            audio.remove();
-        }};
-        </script>
         """
 
         st.markdown(audio_player, unsafe_allow_html=True)
