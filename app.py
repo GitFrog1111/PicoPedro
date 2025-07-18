@@ -2627,20 +2627,24 @@ def TimeUntil(unix_timestamp):
 
   
 def SoundEngine(sound):
-    #return
-    try:
-        st_javascript(f"""
-            const audio = document.createElement('audio');
-            audio.src = '{BaseUrl}sounds/{sound}';
-            audio.autoplay = true;
-            audio.onended = () => {{
-                audio.remove();
-            }};
-            document.body.appendChild(audio);
-        """)
-    except Exception as e:
-        print('SoundEngine error:', e)
-        return
+    st_javascript(f"""
+    try {{
+        const audio = document.createElement('audio');
+        audio.src = 'app.picpacho.com/app/static/sounds/{sound}';
+        audio.autoplay = true;
+        audio.onended = () => {{
+            console.log("Audio ended, removing.");
+            audio.remove();
+        }};
+        audio.onerror = (e) => {{
+            console.error("Audio playback error:", e);
+        }};
+        document.body.appendChild(audio);
+        console.log("Audio element added:", audio.src);
+    }} catch (err) {{
+        console.error("JS Error:", err);
+    }}
+""")
 
 def LoaderHint():
     
