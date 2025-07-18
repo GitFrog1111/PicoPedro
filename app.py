@@ -2524,7 +2524,7 @@ def SoundPlayer():
         with st.empty():
             with st.container(border=False, height=1):
                 st.container(border=False, height=20)
-                st.audio(f"Tsounds/{sound}", format="audio/mp3", autoplay=True)
+                st.audio(f"sounds/{sound}", format="audio/mp3", autoplay=True)
             time.sleep(2)
             st.empty()
     return
