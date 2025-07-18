@@ -287,8 +287,6 @@ def Main():
     #st.session_state.Conversation
     #FAQ()
 
-    SoundPlayer()
-
 
     if st.session_state.Prompt:
         character_to_chat = ProcessCommand(st.session_state.Prompt)
@@ -2627,41 +2625,26 @@ def TimeUntil(unix_timestamp):
     # total seconds (or any other breakdown)
     return time_difference
 
-
-if 'SoundBuffer' not in st.session_state:
-    st.session_state.SoundBuffer = []
-
-
-def SoundPlayer():
-    return
-    if 'SoundPlayer' not in st.session_state:
-        player = st.empty()
-      
-    player.empty()
-    if st.session_state.SoundBuffer:
-        for i in range(len(st.session_state.SoundBuffer)):
-            sound = st.session_state.SoundBuffer.pop(0)
-            with player:
-                with st.container(border=False, height=1):
-                    st.container(border=False, height=10)
-                    st.audio(f"static/sounds/{sound}", format="audio/mp3", key = uuid.uuid4(), autoplay=True)
-                
-                
+  
 def SoundEngine(sound):
-    #return
-    with st.empty():
-        st.audio(f"static/sounds/{sound}", format="audio/mp3", autoplay=True)
-        time.sleep(2)
-        st.empty()
-
     
-    
-    #st.session_state.SoundBuffer.append(sound)
+    try:
+        audio_player = f"""
+        <audio id="rand-audio" autoplay>
+        <source src="{BaseUrl}sounds/{sound}" type="audio/mpeg">
+        </audio>
+        <script>
+        const audio = document.getElementById('rand-audio');
+        audio.onended = () => {{
+            audio.remove();
+        }};
+        </script>
+        """
 
-    # with st.session_state.SoundPlayer:
-    #     st.audio(f"{BaseUrl}sounds/{sound}", format="audio/mp3", autoplay=True)
-
-
+        st.markdown(audio_player, unsafe_allow_html=True)
+    except Exception as e:
+        print('SoundEngine error:', e)
+        return
 
 def LoaderHint():
     
