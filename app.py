@@ -2627,6 +2627,7 @@ def TimeUntil(unix_timestamp):
 
   
 def SoundEngine(sound):
+    return
     try:
         audio_player = f"""
         <audio id="rand-audio" autoplay>
