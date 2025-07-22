@@ -307,7 +307,7 @@ def Main():
     #     st.rerun() # Rerun to reflect the new isLoading state and enable UI
 
     SoundPlayer()
-    debug()
+    #debug()
 
 
 def Toolbuffer():
