@@ -65,9 +65,7 @@ Thumbs.db
 *.temp
 
 # Audio/video files that might be generated
-*.mp3
 *.wav
-*.mp4
 *.avi
 
 # Image processing temporary files
