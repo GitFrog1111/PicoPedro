@@ -117,11 +117,11 @@ def debug():
             Shop(cheekytoolify)
 
         with st.container():
-            chosenstates = ["Conversation", "toolbuffer", "player", "PoiList", "inventory", "characters", "missionList",]
+            chosenstates = ["Conversation", "toolbuffer", "player", "PoiList", "inventory", "characters", "missionList", "ShowVocab"]
             AllTabs = st.tabs(chosenstates)
             for i in range(len(chosenstates)):
                 with AllTabs[i]:
-                    st.json(st.session_state[chosenstates[i]])
+                    st.write(st.session_state[chosenstates[i]])
 
 dialog_close_detector()
 
@@ -2296,8 +2296,8 @@ def renderMainUI():
                     click_args = (character,) # Pass the whole character dictionary
                     
                     # Generate unique keys for the container and button using name and counter
-                    container_key = f"{character_name}_{counter}_Container_{time.time()}"
-                    button_key = f"{character_name}_{counter}_Key_{time.time()}"
+                    container_key = f"{character_name}_{counter}_Container_{uuid.uuid1()}"
+                    button_key = f"{character_name}_{counter}_Key_{uuid.uuid1()}"
 
                     # Place the character button and caption in the appropriate column
                     if counter % 3 == 0:
@@ -2348,12 +2348,15 @@ def renderMainUI():
                     counter +=1
         with CharactersEmpty:
             if st.session_state.ShowVocab == True:
-                RenderCharacters(300)
+                st.empty()
+                RenderCharacters(280)
             else:
+                st.empty()
                 RenderCharacters(500)
         #st.container(border=False, height=5)
         #vocab
         VocabEmpty = st.empty()
+
         #PinnedVocab()
 
 
@@ -2456,17 +2459,15 @@ def renderMainUI():
     
     def PinnedVocab():
         with VocabEmpty:
-            with st.container(border=False, height=200):
+            if st.session_state.pinnedVocab:
+                with st.container(border=False, height=200):
                 
-
-
-                if st.session_state.pinnedVocab:
                     if st.session_state.ShowVocab == True:
                         if st.session_state.pinnedVocab["tables"]:
                             for i, df in enumerate(st.session_state.pinnedVocab["tables"]):
                                 st.table(df)
                         with CharactersEmpty:
-                            RenderCharacters(300)
+                            RenderCharacters(280)
                     else:
                         VocabEmpty.empty()
                         with CharactersEmpty:
@@ -2517,6 +2518,18 @@ def TimeUntil(unix_timestamp):
 
 
 
+def GetWaitTime(sound):
+    import mutagen
+    from mutagen.mp3 import MP3
+    try:
+        audio = MP3(f"sounds/{sound}")
+        return audio.info.length
+    except Exception as e:
+        print(f"Error reading sound length: {e}")
+        # Fallback to a default wait time if file can't be read
+        return 2.0
+    
+
 
 def SoundPlayer():
     while len(st.session_state.SoundBuffer) > 0:
@@ -2525,7 +2538,8 @@ def SoundPlayer():
             with st.container(border=False, height=1):
                 st.container(border=False, height=20)
                 st.audio(f"sounds/{sound}", format="audio/mp3", autoplay=True)
-            time.sleep(2)
+            sleepTime = GetWaitTime(sound)
+            time.sleep(sleepTime)
             st.empty()
     return
 
