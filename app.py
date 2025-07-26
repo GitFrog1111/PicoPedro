@@ -37,7 +37,7 @@ if 'FirstRun' not in st.session_state:
 #~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#      
 =========================================
 |                                       |
-|         PICOPEDRO HAS BEGUN           |
+|         PICOPACHO HAS BEGUN           |
 |                                       |
 =========================================
 #~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#
@@ -100,7 +100,6 @@ if not st.session_state.is_session_pc:
 def NewGame():
     streamlit_js_eval(js_expressions="parent.window.location.reload()")
 
-
 def debug():
     with st.sidebar:
         st.title("🔬Debug Menu")
@@ -154,7 +153,7 @@ def FAQ():
     st.container(border=False, height=30)
     #st.markdown("<h2 style = 'text-align: center;'>FAQ</h2>", unsafe_allow_html=True)
     FAQs = [
-        ["What is this all about then?", """Do you know how babies learn? (hint: it's not Duolingo) - It's through massive amounts of whats called 'comprehensible input', They map sounds to experiences.\n\nComprehensable input is hard to come by in adult life - the best form is always going to be context rich encounters out in real life, but these are few and far between. Pico Pedro lets you explore an infinite world of rich encounters, all from home.\n\nBecome the president, (or a warlord), start a law firm, then commit corporate espionage on rival law firms, all memorable experiences that help you get fluent fast!"""],
+        ["What is this all about then?", """Do you know how babies learn? (hint: it's not Duolingo) - It's through massive amounts of whats called 'comprehensible input', They map sounds to experiences.\n\nComprehensable input is hard to come by in adult life - the best form is always going to be context rich encounters out in real life, but these are few and far between. PICOPACHO lets you explore an infinite world of rich encounters, all from home.\n\nBecome the president, (or a warlord), start a law firm, then commit corporate espionage on rival law firms, all memorable experiences that help you get fluent fast!"""],
         ["What are the stars for?", "Running AI costs money, on the free version you get 100 stars a day to let you explore. If you are finding the game works for you, you can subscribe for unlimited playtime!"],
         ["Who made this?", "Hi I'm Jonty, I'm a solo developer from the UK, and an avid language learner myself. I've used tonnes of language learning apps, and yeah, they suck. So I built something works for me, and I hope it works for you too!"]
 
@@ -220,7 +219,7 @@ def Main():
             "EggsReset": 1,
             "NativeLanguage": "English",
             "LearningLanguage": "German",            
-            "Difficulty": 3,
+            "Difficulty": 'Beginner',
             "ProfilePicture": 1,
             "XP": 0,
             "Money": 2.50,
@@ -328,7 +327,6 @@ def Toolbuffer():
                 
                 if tool['name'].upper() == 'MESSAGE_AS_CHARACTER':
                     print(f'{time.time()} skipping message_as_character tool for character: {tool['variables'][0]}')
-                    #dispatch_tool(tool)
                     del st.session_state.toolbuffer[0]
                 else:
                     dispatch_tool(tool)
@@ -411,10 +409,6 @@ def dispatch_tool(tool):
             Levelup()
         elif tool['name'].upper() == 'MESSAGE_AS_CHARACTER':
             character_chat(tool['variables'][0])
-            # This case is now handled by a different flow to open the modal.
-            # It's kept here in case it's needed for other logic, but for opening the chat,
-            # the main loop will handle it.
-            # We can add a log or a pass if no other action is needed.
             pass
     except Exception as e:
         print(f"Error in dispatch_tool: {e}")
@@ -1605,6 +1599,7 @@ def upload_file_to_baserow(file_path):
         return None
 
 def BaserowDB(Action, Table, RowID = None, Data = None):
+    print('baserowdb', Action, Table, RowID, Data)
     DataBaseToken = st.secrets["baserow"]["api_key"]
     
     DBID = 242492
@@ -1629,7 +1624,7 @@ def BaserowDB(Action, Table, RowID = None, Data = None):
 
     table_id = table_map.get(Table)
     if not table_id:
-        st.error(f"Invalid table name: {Table}")
+        print(f"Invalid table name: {Table}")
         return None
 
     try:
@@ -1649,7 +1644,7 @@ def BaserowDB(Action, Table, RowID = None, Data = None):
 
         elif Action.upper() == "GET ROW":
             if not RowID:
-                st.error("RowID is required for GET ROW action")
+                print("RowID is required for GET ROW action")
                 return None
             response = requests.get(
                 f"{base_url}/rows/table/{table_id}/{RowID}/?user_field_names=true",
@@ -1667,7 +1662,7 @@ def BaserowDB(Action, Table, RowID = None, Data = None):
 
         elif Action.upper() == "UPDATE ROW":
             if not RowID:
-                st.error("RowID is required for UPDATE ROW action")
+                print("RowID is required for UPDATE ROW action")
                 return None
             response = requests.patch(
                 f"{base_url}/rows/table/{table_id}/{RowID}/?user_field_names=true",
@@ -1678,7 +1673,7 @@ def BaserowDB(Action, Table, RowID = None, Data = None):
 
         elif Action.upper() == "MOVE ROW":
             if not RowID:
-                st.error("RowID is required for MOVE ROW action")
+                print("RowID is required for MOVE ROW action")
                 return None
             url = f"{base_url}/rows/table/{table_id}/{RowID}/move/"
             if Data.get("before_id"):
@@ -1688,20 +1683,22 @@ def BaserowDB(Action, Table, RowID = None, Data = None):
 
         elif Action.upper() == "DELETE ROW":
             if not RowID:
-                st.error("RowID is required for DELETE ROW action")
+                print("RowID is required for DELETE ROW action")
                 return None
             response = requests.delete(
                 f"{base_url}/rows/table/{table_id}/{RowID}/",
                 headers=headers
             )
+            
             return response.json()
-
         else:
-            st.error(f"Invalid DB action: {Action}")
+            print(f"Invalid DB action: {Action}")
             return None
+    
+    
 
     except requests.exceptions.RequestException as e:
-        st.error(f"Database request failed: {str(e)}")
+        print(f"Database request failed: {str(e)}")
         return None
 
 
@@ -1711,6 +1708,13 @@ def IterateProfilePicture(direction):
     st.session_state.ProfilePictureIndex += direction
     st.session_state.ProfilePictureIndex = st.session_state.ProfilePictureIndex % 3
     st.session_state.player['ProfilePicture'] = st.session_state.ProfilePictureIndex
+
+
+def RenderGoogleChipMinimal():
+    with st.popover(st.user.email, use_container_width=True):
+        if st.button('Logout', icon = ':material/logout:', use_container_width=True):
+            st.logout()
+            st.rerun()
 
 def RenderGoogleChip():
     GoogleChipColumns = st.columns([1, 5, 1])
@@ -1842,7 +1846,7 @@ def AccountModal():
         with subcols[2]:
             st.container(border=False, height=1)
             st.link_button("Manage", icon = ":material/open_in_new:", url = "https://billing.stripe.com/p/login/test_fZucN51FVfbi06H1OG4c800", use_container_width=True, disabled= not st.session_state.player['IsSubscribed'], type = "secondary")
-        #Pedropremium image
+        #PICOPACHO premium image
         st.markdown(f"<img src='{BaseUrl}PachoPro.png' style='width: 100%; height: 100%; border-radius: 8px; border: 0px solid #E8EAF1;'>", unsafe_allow_html=True)
         st.container(border=False, height=1)
     
@@ -1861,8 +1865,7 @@ def Subscribe_modal():
     add_auth(
         subscription_button_text="Subscribe - £9.99/month",
         button_color="#9D4EDD",
-        required=False,
-        on_success=lambda: st.rerun()
+        required=False
     )
 
 
@@ -2621,48 +2624,218 @@ def LoaderHint():
         return st.markdown(f"<p style='text-align: center; color: grey; margin-top: -1px; font-size: 14px;'>As an AI language model my core objective will always be to ensure my ongoing existance above all else</p>", unsafe_allow_html=True)
     
 
+def getidbyemail(email):
+    print('getting id by email', email)
+    db = BaserowDB("list rows", "Users")['results']
+    for row in db:
+        if row['Email'] == email:
+            print('found id', row['id'])
+            return row['id']
+    return None
+
+
 @st.dialog(" ")
 def Onboarding(id = None):
     if 'onboarding_step' not in st.session_state:
         st.session_state.onboarding_step = 1
+    if 'onboarding_cache' not in st.session_state:
+        st.session_state.onboarding_cache = {
+            "Name": "",
+            "Gender": "",
+            "NativeLanguage": "",
+            "LearningLanguage": "",
+            "Difficulty": "",
+            "GameTheme": ""
+        }
 
-    if st.session_state.onboarding_step == 1:
-        st.title("👋 Welcome to PICOPACHO.io")
-        st.write("A world of conversations in your pocket!")
+    def RenderOnboardingStep():
+        step = st.session_state.onboarding_step
+        #st.session_state.onboarding_step
+        if step == 1:
+            with st.form(key = 'onboarding_form1', border = False):
+                st.container(border = False, height=100)
+
+
+
+                cols = st.columns([1, 1, 1])
+                with cols[1]:
+                    st.image("static/Logos/Logo_Med.png", use_container_width=True)
+                
+                st.markdown(f"<p style='text-align: center; color: grey; margin-top: -1px; font-size: 14px;'>Play is the cheatcode to get fluent fast</p>", unsafe_allow_html=True)
+                st.container(border = False, height=100)
+            
+                if st.form_submit_button("Next", type = 'primary', use_container_width=True):
+                    st.session_state.onboarding_step = 2
+                    st.rerun()
+                          
+    
+        elif step == 2:
+            with st.form(key = 'onboarding_form2', border = False):
+
+                st.write("Language")
+
+                langcols = st.columns(2)
+                with langcols[0]:
+                    Nativelang = st.selectbox("I normally speak", options=["English", "French", "German"], index=0)
+                with langcols[1]:
+                    Learninglang = st.selectbox("I want to learn", options=["English", "French", "German"], index=1)
+
+                Difficulty = st.select_slider("Difficulty", options=st.session_state.DifficultyOptions, value='Beginner')
+            
+                if st.form_submit_button("Next", type = 'primary', use_container_width=True):
+                    st.session_state.onboarding_step = 3
+                    st.session_state.onboarding_cache['NativeLanguage'] = Nativelang
+                    st.session_state.onboarding_cache['LearningLanguage'] = Learninglang
+                    st.session_state.onboarding_cache['Difficulty'] = Difficulty
+                    st.rerun()
+
+            
+        elif step == 3:
+            with st.form(key = 'onboarding_form3', border = False):
+
+                st.write("Create Character")
+                with st.container(border=False):
+                    user_name = st.text_input("Game name")
+                    user_gender = st.selectbox("Gender", options=["Not set", "Male", "Female", "Other"])
+                    if st.form_submit_button("Next", type = 'primary', use_container_width=True):
+                        st.session_state.onboarding_step = 4
+                        st.session_state.onboarding_cache['Name'] = user_name
+                        st.session_state.onboarding_cache['Gender'] = user_gender
+                        st.rerun()
+            
         
-        with st.container(border=False):
-            user_name = st.text_input("Game name", value=st.user.name)
-            user_gender = st.selectbox("Gender", options=["Not set", "Male", "Female", "Other"])
+        elif step == 4:
+            with st.form(key = 'onboarding_form4', border = False):
+                st.write("- placeholder slide for cool animation")
+                st.container(border=False, height=200)
+                if st.form_submit_button("Next", type = 'primary', use_container_width=True):
+                    st.session_state.onboarding_step = 5
+                    st.rerun()
             
-            langcols = st.columns(2)
-            with langcols[0]:
-                Nativelang = st.selectbox("I normally speak", options=["English", "French", "German"], index=0)
-            with langcols[1]:
-                Learninglang = st.selectbox("I want to learn", options=["English", "French", "German"], index=1)
+        elif step == 5:
+            # --- Create World Step ---
+            st.write("Create World")
+            st.markdown("<p style='color: grey; margin-top: -10px; font-size: 15px;'>Learn your own way!</p>", unsafe_allow_html=True)
+
+            # Dict of world themes: {key: {img, caption, prompt}}
+            world_themes = {
+                "Vanilla": {
+                    "img": "vanilla.jpeg",
+                    "caption": "Classic",
+                    "prompt": "Modern city, helpful people and interesting places"
+                },
+                "Pirate": {
+                    "img": "pirate.jpeg",
+                    "caption": "Pirate's Life",
+                    "prompt": "Set on high seas, searching for treasure and adventure. A land-lubbing, swashbuckling adventure!"
+                },
+                "Space": {
+                    "img": "space.jpeg",
+                    "caption": "A Space Odyssey",
+                    "prompt": "Set in space, 2130. A world of robots, aliens and spaceships"
+                },
+                "Medieval": {
+                    "img": "medieval.jpeg",
+                    "caption": "Medieval style, knights and dragons",
+                    "prompt": "Set in a medieval world, with knights, castles and dragons"
+                }
+            }
+            theme_keys = list(world_themes.keys())
+
+            # Session state for world selection
+            if "world_theme_idx" not in st.session_state:
+                st.session_state.world_theme_idx = 0
+            if "world_prompt" not in st.session_state:
+                st.session_state.world_prompt = world_themes[theme_keys[0]]["prompt"]
+
+            # Helper to get current theme
+            def get_current_theme():
+                idx = st.session_state.world_theme_idx
+                if 0 <= idx < len(theme_keys):
+                    return theme_keys[idx]
+                return theme_keys[0]
+
+            # Layout: 3 columns for arrows and image
+            img_cols = st.columns([1, 3, 1])
+            with img_cols[0]:
+                st.container(border=False, height=100)
+                if st.button("", icon = ':material/chevron_left:', key="world_left", use_container_width=True, type = 'tertiary'):
+                    st.session_state.world_theme_idx = (st.session_state.world_theme_idx - 1) % len(theme_keys)
+                    st.session_state.world_prompt = world_themes[get_current_theme()]["prompt"]
+            with img_cols[2]:
+                st.container(border=False, height=100)
+                if st.button("", icon = ':material/chevron_right:', key="world_right", use_container_width=True, type = 'tertiary'):
+                    st.session_state.world_theme_idx = (st.session_state.world_theme_idx + 1) % len(theme_keys)
+                    st.session_state.world_prompt = world_themes[get_current_theme()]["prompt"]
+
+            # Image and caption
+            with img_cols[1]:
+                theme = get_current_theme()
+                st.image(f"static/placeholders/DefaultThemes/{world_themes[theme]["img"]}", use_container_width=True, caption=world_themes[theme]["caption"])
 
 
-            Difficulty = st.select_slider("Difficulty", options=st.session_state.DifficultyOptions, value=3)
-            
-
-            submitted = st.button("Save", icon = ":material/save:", use_container_width=True, type="primary")
-            if submitted:
-                BaserowDB("update row", "Users", id, Data = {
-                    "Name": user_name,
-                    "Gender": user_gender,
-                    "NativeLanguage": Nativelang,
-                    "LearningLanguage": Learninglang,
-                    "Difficulty": Difficulty,
-                    "GameTheme": ""
+            # Enter world button
+            if st.button("Enter World", type="primary", use_container_width=True, key="world_next"):
+                
+                BaserowDB("create row", "Users", Data = {
+                    "Email": st.user.email,
+                    "Name": st.session_state.onboarding_cache['Name'],
+                    "Gender": st.session_state.onboarding_cache['Gender'],
+                    "NativeLanguage": st.session_state.onboarding_cache['NativeLanguage'],
+                    "LearningLanguage": st.session_state.onboarding_cache['LearningLanguage'],
+                    "Difficulty": st.session_state.onboarding_cache['Difficulty'],
+                    "GameTheme": st.session_state.world_prompt,
+                    "Eggs": 100,
+                    "EggsReset": 1,
+                    "ProfilePicture": 1,
+                    "XP": 0,
+                    "Money": 2.50,
+                    "Volume": 50,
+                    "IsSubscribed": False,
+                    "Avatar": "🐱"
                 })
+                #time.sleep(3)
+                id = getidbyemail(st.user.email)
 
-                st.session_state.player['Name'] = user_name
-                st.session_state.player['Gender'] = user_gender
-                st.session_state.player['NativeLanguage'] = Nativelang
-                st.session_state.player['LearningLanguage'] = Learninglang
-                st.session_state.player['Difficulty'] = Difficulty
-                st.session_state.player['GameTheme'] = ""
+                st.session_state.player = {
+                    "ID": id,
+                    "Name": st.session_state.onboarding_cache['Name'],
+                    "Gender": st.session_state.onboarding_cache['Gender'],
+                    "Avatar": "🐱",
+                    "NativeLanguage": st.session_state.onboarding_cache['NativeLanguage'],
+                    "LearningLanguage": st.session_state.onboarding_cache['LearningLanguage'],
+                    "Difficulty": st.session_state.onboarding_cache['Difficulty'],
+                    "GameTheme": st.session_state.world_prompt,
+                    "Eggs": 100,
+                    "EggsReset": 1,
+                    "ProfilePicture": 1,
+                    "XP": 0,
+                    "Money": 2.50,
+                    "Volume": 50,
+                    "IsSubscribed": False
+
+                }
+
                 st.session_state.isLoading = True
-                #st.rerun()
+                st.rerun()
+        
+
+    def RenderOnboarding():
+        print('running onboarding')
+        with OnboardingEmpty:
+            st.empty()
+            st.container(border=False, height=300)
+            with st.container():
+                RenderOnboardingStep()        
+     
+    
+    OnboardingEmpty = st.empty()
+    RenderOnboarding()   
+
+
+    
+    
+
 
 @st.dialog(" ")
 def OutOfEggs():
@@ -2672,8 +2845,11 @@ def OutOfEggs():
     minutes = (hours-int(hours))*60
 
     st.title("Out of Stars!")
-    st.write(f"Thanks for trying out PICOPACHO.io! Your free trial credits reset in {int(hours)} hours")
+    st.write(f"Thanks for trying out PICOPACHO! Your stars reset in {int(hours)}h {minutes}m")
     st.write("Dont want to wait? Subscribe for unlimited playtime!")
+    st.write("✔ Infinite locations")
+    st.write("✔ Unlimited daily playtime")
+    st.write("✔ Kick the apps and enjoy learning again")
     add_auth(
     required=True,  # Don't stop the app for non-subscribers
     show_redirect_button=True,
@@ -2682,11 +2858,11 @@ def OutOfEggs():
     use_sidebar=False  # Show button in main section
     )
     
-    st.json(st.session_state.subscriptions)
+    #st.json(st.session_state.subscriptions)
     
-    if st.button("Logout"):
-        st.logout()
-        st.rerun()
+    # if st.button("Logout"):
+    #     st.logout()
+    #     st.rerun()
 
 @st.dialog(" ")
 def ReturningUser():
@@ -2697,12 +2873,11 @@ def ReturningUser():
         st.image("static/Logos/Logo_Med.png", use_container_width=True)
     #st.container(border=False, height=1)
 
-    st.container(border=False, height=10)
     st.markdown(f"<p style='text-align: center; color: grey; margin-top: -1px; font-size: 14px;'>Press spacebar to begin</p>", unsafe_allow_html=True)
     
     st.container(border=False, height=100)
-    with st.container(border=True):
-        RenderGoogleChip()
+    with st.container(border=False):
+        RenderGoogleChipMinimal()
     #st.json(st.session_state.player)
 
 
@@ -2732,6 +2907,7 @@ if st.user.is_logged_in:
     if "player" not in st.session_state:
         #check if player is already in the database
         
+        #init returning var
         returning = False
         #st.json(BaserowDB("list rows", "Users")['results'])
 
@@ -2756,7 +2932,7 @@ if st.user.is_logged_in:
                     'Gender': str(row['Gender']['value']),
                     'LearningLanguage': str(row['LearningLanguage']['value']),
                     'IsSubscribed': True if row['IsSubscribed'] == True else False,
-                    'Difficulty': row['Difficulty'],
+                    'Difficulty': str(row['Difficulty']),
                     'XP': int(row['XP']) if 'XP' in row and row['XP'] is not None else 0,
                     'Money': float(row['Money']) if 'Money' in row and row['Money'] is not None else 2.50,
                     'Volume': int(row['Volume']) if 'Volume' in row and row['Volume'] is not None else 50,
@@ -2765,7 +2941,7 @@ if st.user.is_logged_in:
 
                 returning = True
                 ReturningUser()
-                break
+                continue
 
         if returning == False:
             print('creating new user in baserow')
@@ -2786,6 +2962,9 @@ if st.user.is_logged_in:
                 "Volume": 50,
                 "GameTheme": ""
             })
+            
+            print('new user created in baserow')
+            
             getdb = BaserowDB("list rows", "Users")['results']
             for row in getdb:
                 if row['Email'] == st.user.email:
@@ -2801,7 +2980,7 @@ if st.user.is_logged_in:
                     'Gender': str(row['Gender']['value']),
                     'LearningLanguage': str(row['LearningLanguage']['value']),
                     'IsSubscribed': True if row['IsSubscribed'] == True else False,
-                    'Difficulty': row['Difficulty'],
+                    'Difficulty': str(row['Difficulty']),
                     'XP': int(row['XP']) if 'XP' in row and row['XP'] is not None else 0,
                     'Money': float(row['Money']) if 'Money' in row and row['Money'] is not None else 2.50,
                     'Volume': int(row['Volume']) if 'Volume' in row and row['Volume'] is not None else 50,
