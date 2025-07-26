@@ -25,6 +25,8 @@ import json
 import math
 import os
 import asyncio
+import mutagen
+from mutagen.mp3 import MP3
 
 from streamlit_js_eval import streamlit_js_eval
 from streamlit_javascript import st_javascript
@@ -2522,15 +2524,19 @@ def TimeUntil(unix_timestamp):
 
 
 def GetWaitTime(sound):
-    import mutagen
-    from mutagen.mp3 import MP3
+
     try:
-        audio = MP3(f"sounds/{sound}")
-        return audio.info.length
-    except Exception as e:
-        print(f"Error reading sound length: {e}")
-        # Fallback to a default wait time if file can't be read
-        return 2.0
+        return st.session_state.soundlengths[sound]
+    except:
+        try:
+            audio = MP3(f"sounds/{sound}")
+            st.session_state.soundlengths[sound] = audio.info.length
+            return audio.info.length
+        except Exception as e:
+            print(f"Error reading sound length: {e}")
+            # Fallback to a default wait time if file can't be read
+            return 2.0
+    
     
 
 
@@ -2552,6 +2558,7 @@ if 'SoundBuffer' not in st.session_state:
 
 def SoundEngine(sound):
     st.session_state.SoundBuffer.append(sound)
+    SoundPlayer()
 
 #     components.html(f"""
 # <script>
