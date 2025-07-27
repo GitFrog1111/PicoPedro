@@ -1,10 +1,10 @@
 app:
-one last crack at sounds
+Fix st paywall
 reexport professor pacho fix line on left
 try new loading anim
 tidy up missions display fix weird bumping down- markdown
-fix onboarding (difficulty slider broke)
 change openai api key
+add onboarding polish - anims, more themes, default name
 
 
 AND THEN LAUNCH!

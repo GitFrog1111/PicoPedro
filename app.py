@@ -1867,7 +1867,8 @@ def Subscribe_modal():
     add_auth(
         subscription_button_text="Subscribe - £9.99/month",
         button_color="#9D4EDD",
-        required=False
+        required=False,
+        use_sidebar=False
     )
 
 
@@ -2370,7 +2371,7 @@ def renderMainUI():
         # st.container(border=False, height=10)
         #st.markdown(f"<b><h5 style='text-align: center; color: black;'>{st.session_state.POI['Name']}</h5></b>", unsafe_allow_html=True)
         #st.container(border=False, height=5)
-        st.markdown(f""" <img src='app/static/Logos/Logo_Blackout_Med.png' style="width: 20%; height: 20%; margin-top: -120px; display: block; margin-left: auto; margin-right: auto;"> """, unsafe_allow_html=True)
+        st.markdown(f""" <img src='app/static/Logos/Logo_Whiteout_Med.png' style="width: 20%; height: 20%; margin-top: -150px; display: block; margin-left: auto; margin-right: auto;"> """, unsafe_allow_html=True)
         st.markdown(f"<b><h5 style='text-align: center; color: black; margin-top: -20px;'>{st.session_state.POI['Name']}</h5></b>", unsafe_allow_html=True)
         st.session_state.POI['Empty'] = st.empty()
         with st.session_state.POI['Empty']:
@@ -2490,7 +2491,7 @@ def renderMainUI():
 
         
     with bottombar[4]:
-        #st.container(border=False, height=1 )
+        #st.container(border=False, height=1)
 
 
         suggestion = "What do you want to do?"
@@ -2524,18 +2525,13 @@ def TimeUntil(unix_timestamp):
 
 
 def GetWaitTime(sound):
-
     try:
-        return st.session_state.soundlengths[sound]
-    except:
-        try:
-            audio = MP3(f"sounds/{sound}")
-            st.session_state.soundlengths[sound] = audio.info.length
-            return audio.info.length
-        except Exception as e:
-            print(f"Error reading sound length: {e}")
-            # Fallback to a default wait time if file can't be read
-            return 2.0
+        audio = MP3(f"sounds/{sound}")
+        return audio.info.length + 0.2
+    except Exception as e:
+        print(f"Error reading sound length: {e}")
+        # Fallback to a default wait time if file can't be read
+        return 2.0
     
     
 
@@ -2558,7 +2554,7 @@ if 'SoundBuffer' not in st.session_state:
 
 def SoundEngine(sound):
     st.session_state.SoundBuffer.append(sound)
-    SoundPlayer()
+    #SoundPlayer()
 
 #     components.html(f"""
 # <script>
@@ -2668,7 +2664,7 @@ def Onboarding(id = None):
                 with cols[1]:
                     st.image("static/Logos/Logo_Med.png", use_container_width=True)
                 
-                st.markdown(f"<p style='text-align: center; color: grey; margin-top: -1px; font-size: 14px;'>Play is the cheatcode to get fluent fast</p>", unsafe_allow_html=True)
+                st.markdown(f"<p style='text-align: center; color: grey; margin-top: -1px; font-size: 14px;'>Learning but actually fun</p>", unsafe_allow_html=True)
                 st.container(border = False, height=100)
             
                 if st.form_submit_button("Next", type = 'primary', use_container_width=True):
@@ -2679,7 +2675,7 @@ def Onboarding(id = None):
         elif step == 2:
             with st.form(key = 'onboarding_form2', border = False):
 
-                st.write("Language")
+                st.write("🗺️ Language")
 
                 langcols = st.columns(2)
                 with langcols[0]:
@@ -2700,9 +2696,12 @@ def Onboarding(id = None):
         elif step == 3:
             with st.form(key = 'onboarding_form3', border = False):
 
-                st.write("Create Character")
+                st.write("👋 Create Character")
                 with st.container(border=False):
-                    user_name = st.text_input("Game name")
+                    user_name = 'John Smith'
+                    t = st.text_input("Name", placeholder = user_name)
+                    if t != '':
+                        user_name = t
                     user_gender = st.selectbox("Gender", options=["Not set", "Male", "Female", "Other"])
                     if st.form_submit_button("Next", type = 'primary', use_container_width=True):
                         st.session_state.onboarding_step = 4
@@ -2713,7 +2712,7 @@ def Onboarding(id = None):
         
         elif step == 4:
             with st.form(key = 'onboarding_form4', border = False):
-                st.write("- placeholder slide for cool animation")
+                st.write("🦉 placeholder slide for cool animation")
                 st.container(border=False, height=200)
                 if st.form_submit_button("Next", type = 'primary', use_container_width=True):
                     st.session_state.onboarding_step = 5
@@ -2721,7 +2720,7 @@ def Onboarding(id = None):
             
         elif step == 5:
             # --- Create World Step ---
-            st.write("Create World")
+            st.write("🌌 Create World")
             st.markdown("<p style='color: grey; margin-top: -10px; font-size: 15px;'>Learn your own way!</p>", unsafe_allow_html=True)
 
             # Dict of world themes: {key: {img, caption, prompt}}
@@ -2849,14 +2848,14 @@ def OutOfEggs():
 
     time_difference = TimeUntil(st.session_state.player["EggsReset"])
     hours = time_difference / 3600
-    minutes = (hours-int(hours))*60
+    minutes = int((hours-int(hours))*60)
 
     st.title("Out of Stars!")
-    st.write(f"Thanks for trying out PICOPACHO! Your stars reset in {int(hours)}h {minutes}m")
-    st.write("Dont want to wait? Subscribe for unlimited playtime!")
-    st.write("✔ Infinite locations")
-    st.write("✔ Unlimited daily playtime")
-    st.write("✔ Kick the apps and enjoy learning again")
+    st.write(f"Thanks for trying out PICOPACHO! Your stars reset in {int(hours)}h {minutes}m.")
+    st.write("Don't want to wait? Subscribe for unlimited playtime!")
+    st.caption("✔ Infinite locations")
+    st.caption("✔ Unlimited daily playtime")
+    st.caption("✔ Kick the apps and enjoy learning again")
     add_auth(
     required=True,  # Don't stop the app for non-subscribers
     show_redirect_button=True,
