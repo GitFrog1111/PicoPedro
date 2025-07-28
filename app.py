@@ -3454,6 +3454,7 @@ else:
         with b:
             if st.button("Sign Up", icon=":material/person_add:", key="SignUpBut", use_container_width=True, type="primary", disabled=st.session_state.isLoading):
                 st.login(provider="google")
+    st.markdown("<p style='text-align: center; color: grey; margin-top: -10px; font-size: 14px;'>By continuing, you agree to our <a href='https://www.picopacho.com/privacy_policy' target='_blank'>Privacy Policy</a> and <a href='https://www.picopacho.com/terms_of_service' target='_blank'>Terms of Service</a>.</p>", unsafe_allow_html=True)
 
 if "SupportedLanguages" not in st.session_state:
     st.session_state.SupportedLanguages = ["English", "French", "German"]
