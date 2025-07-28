@@ -326,6 +326,29 @@ def Main():
     #debug()
 
 
+async def execute_image_generation_tasks(image_tasks):
+    """Execute all image generation tasks concurrently"""
+    if not image_tasks:
+        return []
+    
+    try:
+        # Get or create a new asyncio event loop
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        
+        # Execute all image generation tasks concurrently
+        results = await asyncio.gather(*[task['func'](task['tool']) for task in image_tasks], return_exceptions=True)
+        
+        print(f"Completed {len(results)} image generation tasks concurrently")
+        return results
+        
+    except Exception as e:
+        print(f"Error in concurrent image generation: {e}")
+        return [None] * len(image_tasks)
+
 def Toolbuffer():
     print(f'{time.time()} running toolbuffer: \n', st.session_state.toolbuffer)
     if st.session_state.get('ModalOpen', False):
@@ -333,27 +356,86 @@ def Toolbuffer():
 
     if len(st.session_state.toolbuffer) > 0:
         st.session_state.isLoading = True
-        tools = st.session_state.toolbuffer
+        tools = st.session_state.toolbuffer.copy()
+        
+        # Separate image generation tools from other tools
+        image_generation_tools = []
+        other_tools = []
+        
         for tool in tools:
-            st.session_state.isLoading = True
+            tool_name = tool['name'].upper()
+            if tool_name in ['NEW_POI', 'GENERATE_CHARACTER', 'ADD_ITEM_TO_INVENTORY']:
+                if tool_name == 'NEW_POI':
+                    image_generation_tools.append({'tool': tool, 'func': new_poi_async})
+                elif tool_name == 'GENERATE_CHARACTER':
+                    image_generation_tools.append({'tool': tool, 'func': new_character_async})
+                elif tool_name == 'ADD_ITEM_TO_INVENTORY':
+                    image_generation_tools.append({'tool': tool, 'func': new_item_async})
+            else:
+                other_tools.append(tool)
+        
+        # Execute image generation tasks concurrently if any exist
+        if image_generation_tools:
+            print(f"Executing {len(image_generation_tools)} image generation tasks concurrently...")
+            
             try:
-                print('\nexecuting tool: ', tool)
-                # `handle_tools` is responsible for opening chats.
-                # If a `message_as_character` tool is in the buffer, it's likely because the modal was open
-                # or the character didn't exist. We'll skip it here to avoid unexpected behavior.
+                # Get or create event loop
+                try:
+                    loop = asyncio.get_running_loop()
+                except RuntimeError:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                
+                # Run concurrent image generation
+                results = loop.run_until_complete(
+                    execute_image_generation_tasks(image_generation_tools)
+                )
+                
+                print(f"Completed concurrent image generation: {len(results)} results")
+                
+                # Remove image generation tools from buffer
+                for img_task in image_generation_tools:
+                    if img_task['tool'] in st.session_state.toolbuffer:
+                        st.session_state.toolbuffer.remove(img_task['tool'])
+                
+            except Exception as e:
+                print(f"Error in concurrent execution: {e}")
+                # If concurrent execution fails, fall back to sequential processing
+                for img_task in image_generation_tools:
+                    try:
+                        dispatch_tool(img_task['tool'])
+                        if img_task['tool'] in st.session_state.toolbuffer:
+                            st.session_state.toolbuffer.remove(img_task['tool'])
+                    except Exception as tool_error:
+                        print(f"Error executing tool {img_task['tool']}: {tool_error}")
+                        if img_task['tool'] in st.session_state.toolbuffer:
+                            st.session_state.toolbuffer.remove(img_task['tool'])
+        
+        # Execute remaining non-image tools sequentially
+        for tool in other_tools:
+            try:
+                print(f'\nexecuting non-image tool: {tool}')
                 
                 if tool['name'].upper() == 'MESSAGE_AS_CHARACTER':
                     print(f'{time.time()} skipping message_as_character tool for character: {tool['variables'][0]}')
-                    del st.session_state.toolbuffer[0]
+                    if tool in st.session_state.toolbuffer:
+                        st.session_state.toolbuffer.remove(tool)
                 else:
                     dispatch_tool(tool)
-                    del st.session_state.toolbuffer[0]
-                    st.rerun()                
+                    if tool in st.session_state.toolbuffer:
+                        st.session_state.toolbuffer.remove(tool)
+                                   
             except Exception as e:
-                
                 print(f'{time.time()} error executing tool: {e}')
-                del st.session_state.toolbuffer[0]
-                st.rerun()
+                if tool in st.session_state.toolbuffer:
+                    st.session_state.toolbuffer.remove(tool)
+        
+        # If there are still tools in the buffer, rerun to process them
+        if st.session_state.toolbuffer:
+            st.rerun()
+        else:
+            st.session_state.isLoading = False
+            st.rerun()
     else:
         st.session_state.isLoading = False
         st.rerun()
@@ -490,39 +572,28 @@ def new_poi(tool):
         poi_name = tool['variables'][0]
         poi_prompt = tool['variables'][1]
         poi_coordinates = tool['variables'][2]
-        print('poi_coordinates: ', poi_coordinates)
-        split_coordinates = poi_coordinates.split(',')
-        print('coords: ', split_coordinates)
-        # x = (int(split_coordinates[0]) + random.randint(-5, 5))/5
-        # y = (int(split_coordinates[1]) + random.randint(-5, 5))/5
-        # x = round(x, 0)
-        # y = round(y, 0)
+        
+        # Set the new POI as current location immediately
+        st.session_state.POI["Name"] = poi_name
+        
+        # Generate random coordinates
         x = random.randint(0, 100)
         y = random.randint(0, 100)
-        print('x: ', x)
-        print('y: ', y)
-
         poi_coordinates = f"{x},{y}"
-        print(poi_coordinates)
-        #st.success(f"🏰 New POI Created: Name='{poi_name}', Prompt='{poi_prompt}'")
         
-        #Image = fal(f'2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel, 3d rendering. detailed and varied, asymmetrical. organic shapes, point of interest: {poi_name}. {poi_prompt}')
-        #Image = fal_poi(f"point of interest:{poi_name}, isometric point of interest, detailed map tile, pixel art, medieval rpg pixel art game, moody, cinematic, gritty, {poi_prompt}")
-        Image = fal_poi(f"{poi_name}, {st.session_state.player['LearningLanguage']} isometric point of interest, detailed map tile, pastel colour pallette, soft beautiful pixel art, rpg pixel art game, moody, cinematic, gritty, {poi_prompt}, 2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel. detailed and varied, asymmetrical.")
+        # Generate POI prompt for image generation
+        full_prompt = f"{poi_name}, {st.session_state.player['LearningLanguage']} isometric point of interest, detailed map tile, pastel colour pallette, soft beautiful pixel art, rpg pixel art game, moody, cinematic, gritty, {poi_prompt}, 2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel. detailed and varied, asymmetrical."
+        
+        Image = fal_poi(full_prompt)
+        
+        # Remove background
         Image = fal_removebg(Image)
-        #print('image: ', Image)
-
         
-
-        #2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel, 3d rendering. detailed and varied, asymmetrical.
-        #Image = 'CityGates.png'
-
-        #Apply mask to image
+        # Apply color correction to the image
         ImageColorCorrect(Image)
 
         #print('printing image: ', Image)
         st.session_state.POI["Image"] = Image
-        st.session_state.POI["Name"] = poi_name
         st.session_state.POI["Prompt"] = poi_prompt
         st.session_state.POI["Coordinates"] = poi_coordinates
         print(st.session_state.POI["Image"])
@@ -540,31 +611,12 @@ def new_poi(tool):
         for character in st.session_state.characters:
             if character.get('is_following', False):
                 character['POI'] = poi_name
-
-        # #dl image and send it to db
-        # img = requests.get(Image)
-        # img.raise_for_status()
-        # img_data = img.content
-        # img_name = f"ProcessingPOI.png"
-        # with open(img_name, "wb") as f:
-        #     f.write(img_data)
-
-        # #upload image to baserow
-        # uploaded_file_info = upload_file_to_baserow(img_name)
-        # if uploaded_file_info:
-        #     image_for_db = [{"name": uploaded_file_info['name']}]
-
-        #     #update the POI list in the db
-        #     BaserowDB("create row", "PointsOfInterest", Data = {
-        #         "Image": image_for_db,
-        #         "Name": poi_name,
-        #         "Prompt": poi_prompt,
-        #         "Coordinates": poi_coordinates,
-        #         "Language": st.session_state.player['LearningLanguage'],
-        #         "CreatedBy": [st.session_state.player['ID']]
-        #     })
-        # else:
-        #     st.error("Could not upload POI image to database.")
+        
+        # If this is the first real POI (not "Welcome Traveller"), move all characters from "Welcome Traveller" to this POI
+        if len(st.session_state.PoiList) == 1:  # First POI created
+            for character in st.session_state.characters:
+                if character['POI'] == "Welcome Traveller":
+                    character['POI'] = poi_name
 
 def load_poi(tool):
     print(tool, 'loading poi')
@@ -582,6 +634,13 @@ def load_poi(tool):
                 st.session_state.POI['Prompt'] = poi['Prompt']
                 st.session_state.POI['Coordinates'] = poi['Coordinates']
                 print('poi image: ', st.session_state.POI['Image'])
+                
+                # Update POI for following characters when traveling
+                for character in st.session_state.characters:
+                    if character.get('is_following', False):
+                        character['POI'] = poi['Name']
+                
+                break
     else:
         st.session_state.Conversation.append({"role": "assistant", "content": f"Poi '{tool['variables'][0]}' not found, check your list of POIs"})
 
@@ -712,6 +771,123 @@ def complete_mission(tool):
         st.session_state.missionList[missionID]['Active?'] = False
         
         #time.sleep(1)
+
+
+### ASYNC TOOL FUNCTIONS ###
+async def new_poi_async(tool):
+    """Async version of new_poi that generates images concurrently"""
+    if len(tool['variables']) >= 3:
+        poi_name = tool['variables'][0]
+        poi_prompt = tool['variables'][1]
+        poi_coordinates = tool['variables'][2]
+        
+        # Set the new POI as current location immediately
+        st.session_state.POI["Name"] = poi_name
+        
+        # Generate random coordinates
+        x = random.randint(0, 100)
+        y = random.randint(0, 100)
+        poi_coordinates = f"{x},{y}"
+        
+        # Generate POI prompt for image generation
+        full_prompt = f"{poi_name}, {st.session_state.player['LearningLanguage']} isometric point of interest, detailed map tile, pastel colour pallette, soft beautiful pixel art, rpg pixel art game, moody, cinematic, gritty, {poi_prompt}, 2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel. detailed and varied, asymmetrical."
+        
+        # Generate POI image and remove background concurrently
+        poi_image_task = fal_poi_async(full_prompt)
+        
+        # Wait for POI image first, then remove background
+        poi_image = await poi_image_task
+        final_image = await fal_removebg_async(poi_image)
+        
+        # Apply image corrections
+        ImageColorCorrect(final_image)
+        
+        # Update session state
+        st.session_state.POI["Image"] = final_image
+        st.session_state.POI["Prompt"] = poi_prompt
+        st.session_state.POI["Coordinates"] = poi_coordinates
+        
+        # Add to POI list
+        new_poi_entry = {
+            "Image": final_image,
+            "Name": poi_name,
+            "Prompt": poi_prompt,
+            "Coordinates": poi_coordinates
+        }
+        st.session_state.PoiList.append(new_poi_entry)
+        
+        # Update following characters
+        for character in st.session_state.characters:
+            if character.get('is_following', False):
+                character['POI'] = poi_name
+        
+        # If this is the first real POI (not "Welcome Traveller"), move all characters from "Welcome Traveller" to this POI
+        if len(st.session_state.PoiList) == 1:  # First POI created
+            for character in st.session_state.characters:
+                if character['POI'] == "Welcome Traveller":
+                    character['POI'] = poi_name
+        
+        return final_image
+
+async def new_character_async(tool):
+    """Async version of new_character that generates character image"""
+    if len(tool['variables']) >= 3:
+        character_name = tool['variables'][0]
+        character_description = tool['variables'][1]
+        character_traits = tool['variables'][2]
+        character_voice_name = tool['variables'][3]
+        
+        # Lookup voice_id
+        character_voice_id = "WAixHs5LYSwPVDJxQgN7"  # default
+        for voice in st.session_state.AvailableVoices:
+            if voice[0].upper() == character_voice_name.upper():
+                character_voice_id = voice[2]
+                break
+        
+        # Generate character image
+        character_prompt = f'PixArFK style, portrait of {character_name}, {character_description}, detailed background, game character icon, pixel art, shoulders-up shot, 3/4 view, jrpg style character icon of a {st.session_state.player["LearningLanguage"]} person'
+        character_image = await fal_icon_async(character_prompt)
+        
+        # Add character to session state
+        st.session_state.characters.append({
+            "name": character_name, 
+            "description": character_description, 
+            "traits": character_traits, 
+            "image": character_image, 
+            'convoHistory': [], 
+            "POI": st.session_state.POI['Name'], 
+            "is_following": False, 
+            "voice_id": character_voice_id
+        })
+        
+        return character_image
+
+async def new_item_async(tool):
+    """Async version of new_item that generates item image"""
+    if len(tool['variables']) >= 3:
+        item_name = tool['variables'][0]
+        item_description = tool['variables'][1]
+        item_image_prompt = tool['variables'][2]
+        
+        # Add notification
+        st.session_state.NotiBuffer.append([f"🎒 New Item: {item_name}", "inventory3.mp3"])
+        
+        # Generate item image
+        item_prompt = f'a single pixel art {item_name}, pixelart game item, game 2d pixel art texture, {item_image_prompt}, pixel art style'
+        try:
+            item_image = await fal_item_async(item_prompt)
+        except Exception as e:
+            print(f"Error generating item image: {e}")
+            item_image = 'https://v3.fal.media/files/kangaroo/XuWWk6AmoGZ2xlfN45neb_Fallback.png'
+        
+        # Add item to inventory
+        st.session_state.inventory.append({
+            "name": item_name, 
+            "description": item_description, 
+            "image": item_image
+        })
+        
+        return item_image
 
 @st.dialog(" ")
 def letter(tool):
@@ -944,6 +1120,162 @@ def fal_instantChar(image, promptAction, prompt):
 
     return image
 
+
+### ASYNC IMAGE GENERATION ###
+async def fal_item_async(prompt: str):
+    """Async version of fal_item using fal_client.submit_async"""
+    try:
+        handler = await fal_client.submit_async(
+            "fal-ai/hidream-i1-fast",
+            arguments={
+                "prompt": prompt,
+                "negative_prompt": "frame, border, edging, spritesheet, Text, duplicate, multiple subjects, blurry, trees, detailed background, hud, outside, grass, sky, background, text, title, words, typography, symmetrical",
+                "image_size": {
+                    "height": 512,
+                    "width": 512
+                },
+                "num_inference_steps": 16,
+                "num_images": 1,
+                "enable_safety_checker": True,
+                "output_format": "jpeg",
+            }
+        )
+        result = await handler.get()
+        ChangeEggs(-1)
+        print(f"Generated item image: {result['images'][0]['url']}")
+        return result['images'][0]['url']
+    except Exception as e:
+        print(f"Error in fal_item_async: {e}")
+        return 'https://v3.fal.media/files/kangaroo/XuWWk6AmoGZ2xlfN45neb_Fallback.png'
+
+async def fal_icon_async(prompt: str):
+    """Async version of fal_icon using fal_client.submit_async"""
+    try:
+        handler = await fal_client.submit_async(
+            "fal-ai/fast-sdxl",
+            arguments={
+                "prompt": prompt,
+                "negative_prompt": "two, 2, multiple, duplicate, spritesheet, seamless, seamless texture, repetition, Text, label, words, title, caption, border, voxel, 3d, dark border, bland, flat color background",
+                "loras": [{"path": 'https://civitai.com/api/download/models/160844?type=Model&format=SafeTensor', "scale": 1.0}],
+                "num_inference_steps": 12,
+                "guidance_scale": 6,
+                "num_images": 1,
+                "enable_safety_checker": True,
+                "output_format": "jpeg",
+            }
+        )
+        result = await handler.get()
+        ChangeEggs(-1)
+        print(f"Generated character icon: {result['images'][0]['url']}")
+        return result['images'][0]['url']
+    except Exception as e:
+        print(f"Error in fal_icon_async: {e}")
+        return f'{BaseUrl}placeholders/Dog.png'
+
+async def fal_poi_async(prompt: str):
+    """Async version of fal_poi using fal_client.submit_async"""
+    try:
+        uploadimage = 'https://v3.fal.media/files/kangaroo/P33jbXijRQp6U0yZeqkel_imageguide3.png'
+        
+        handler = await fal_client.submit_async(
+            "fal-ai/hidream-i1-full/image-to-image",
+            arguments={
+                "prompt": prompt,
+                "negative_prompt": "Text, ui, game ui, label, words, title, caption, border, dark border, poster, vignette, cast shadow, harsh sun lamp",
+                "image_url": uploadimage,
+                "strength": 0.9,
+                "image_size": {
+                    "height": 768,
+                    "width": 768
+                },
+                "num_inference_steps": 18,
+                "guidance_scale": 6,
+                "num_images": 1,
+                "enable_safety_checker": True,
+                "output_format": "jpeg",
+            }
+        )
+        result = await handler.get()
+        ChangeEggs(-1)
+        print(f"Generated POI image: {result['images'][0]['url']}")
+        return result['images'][0]['url']
+    except Exception as e:
+        print(f"Error in fal_poi_async: {e}")
+        return f'https://v3.fal.media/files/koala/mA0RNDOoCzbz4gXzDJF40_imageguide1.png'
+
+async def fal_removebg_async(image_url: str):
+    """Async version of fal_removebg using fal_client.submit_async"""
+    try:
+        handler = await fal_client.submit_async(
+            "fal-ai/bria/background/remove",
+            arguments={
+                "image_url": image_url
+            }
+        )
+        result = await handler.get()
+        print(f"Removed background: {result['image']['url']}")
+        return result['image']['url']
+    except Exception as e:
+        print(f"Error in fal_removebg_async: {e}")
+        return image_url  # Return original if background removal fails
+
+async def fal_iconimg2img_async(prompt: str, image_url: str):
+    """Async version of fal_iconimg2img using fal_client.submit_async"""
+    try:
+        handler = await fal_client.submit_async(
+            "fal-ai/fast-sdxl/image-to-image",
+            arguments={
+                "prompt": prompt,
+                "image_url": image_url,
+                "negative_prompt": "two, 2, multiple, duplicate, spritesheet, seamless, seamless texture, repetition, Text, label, words, title, caption, border, voxel, 3d, dark border, bland, flat color background",
+                "loras": [{"path": 'https://civitai.com/api/download/models/160844?type=Model&format=SafeTensor', "scale": 1.0}],
+                "num_inference_steps": 12,
+                "guidance_scale": 6,
+                "num_images": 1,
+                "enable_safety_checker": True,
+                "output_format": "jpeg",
+                "image_size": {
+                    "height": 1024,
+                    "width": 1024
+                }
+            }
+        )
+        result = await handler.get()
+        ChangeEggs(-1)
+        print(f"Generated img2img result: {result['images'][0]['url']}")
+        return result['images'][0]['url']
+    except Exception as e:
+        print(f"Error in fal_iconimg2img_async: {e}")
+        return image_url  # Return original if conversion fails
+
+async def fal_instantChar_async(image_url: str, prompt_action: str, prompt: str):
+    """Async version of fal_instantChar using fal_client.submit_async"""
+    try:
+        # First generate the instant character
+        handler1 = await fal_client.submit_async(
+            "fal-ai/instant-character",
+            arguments={
+                "prompt": f'character is {prompt_action} pixelart, sholders-up portrait of character talking',
+                "image_url": image_url,
+                "num_inference_steps": 8,
+                "guidance_scale": 3,
+                "image_size": {
+                    "height": 512,
+                    "width": 512
+                }
+            }
+        )
+        result1 = await handler1.get()
+        
+        # Then enhance with img2img
+        enhanced_prompt = f'Character is {prompt_action}, {prompt}'
+        final_image = await fal_iconimg2img_async(enhanced_prompt, result1['images'][0]['url'])
+        
+        print(f"Generated instant character: {final_image}")
+        return final_image
+    except Exception as e:
+        print(f"Error in fal_instantChar_async: {e}")
+        return image_url  # Return original if generation fails
 
 
 def text_to_speech_bytes(text: str, voice_id: str="WAixHs5LYSwPVDJxQgN7") -> bytes:
@@ -1390,12 +1722,34 @@ def character_chat(Character):
                             prompt = f'PixArFK style, portrait of {Character.get('name')}, {Character.get('description').split("Image")[0]} pixel art, close up view on character. game character icon, pixel art, shoulders-up shot, 3/4 view, jrpg style character icon of a German person'
                             promptAction = tool['variables'][1]
 
-                            #promptAction = SpotIntelegence('Given the following conversation, output a short, one sentence description of what the NPC is doing, and their emotion. e.g.\n making lunch, mad at you, happy to see you, sad while driving car etc', st.session_state.convoHistory[-1]['content'], "gpt-4o-mini")
-                            print(promptAction)
-                            with characterImageEmpty:
-                                Character['reactionImages'].append(fal_instantChar(Character.get('image'), promptAction, prompt))
-                                Character['reactionIndex'] += 1
-                                st.image(Character['reactionImages'][len(Character['reactionImages'])-1], caption=char_name, use_container_width=True)
+                            print(f"Updating character image for {Character.get('name')}: {promptAction}")
+                            
+                            # Use async version for faster image generation
+                            try:
+                                # Get or create event loop
+                                try:
+                                    loop = asyncio.get_running_loop()
+                                except RuntimeError:
+                                    loop = asyncio.new_event_loop()
+                                    asyncio.set_event_loop(loop)
+                                
+                                # Generate new character image async
+                                new_image = loop.run_until_complete(
+                                    fal_instantChar_async(Character.get('image'), promptAction, prompt)
+                                )
+                                
+                                with characterImageEmpty:
+                                    Character['reactionImages'].append(new_image)
+                                    Character['reactionIndex'] += 1
+                                    st.image(Character['reactionImages'][len(Character['reactionImages'])-1], caption=char_name, use_container_width=True)
+                                    
+                            except Exception as e:
+                                print(f"Error in async character image update: {e}")
+                                # Fallback to sync version
+                                with characterImageEmpty:
+                                    Character['reactionImages'].append(fal_instantChar(Character.get('image'), promptAction, prompt))
+                                    Character['reactionIndex'] += 1
+                                    st.image(Character['reactionImages'][len(Character['reactionImages'])-1], caption=char_name, use_container_width=True)
                                 
                         
                     if tool['name'].upper() == 'ADD_MISSION':
@@ -3106,101 +3460,3 @@ if "SupportedLanguages" not in st.session_state:
 
 if 'DifficultyOptions' not in st.session_state:
     st.session_state.DifficultyOptions = ["Completely New", "I know some basics", "Beginner", "Conversational", "Intermediate", "Advanced", "Fluent"]
-
-
-# import time
-
-# def animate(x, max, reverse = False):
-#     # Exponential easing curve: 1 - e^(-x)
-#     progress = 1 - math.exp(-x/10)  # Scale factor of 10 for smoother animation
-#     if reverse:
-#         progress = 1 - progress
-#     return int(progress * max)
-
-# if st.button("Animate"):
-#     e = st.empty()
-#     x = 0
-#     a = 0
-#     max = 300
-#     while x < max:
-#         a = animate(x, max)
-#         x += 1
-#         e.container(border=True, height=10 + a)
-
-#         time.sleep(0.01)
-
-#loading gif
-#         file_ = open("Loading.gif", "rb")
-#         contents = file_.read()
-#         data_url = base64.b64encode(contents).decode("utf-8")
-#         file_.close()
-#         st.session_state.UI.markdown(
-#         f'<img src="data:image/gif;base64,{data_url}" alt="Loading gif" width="35">', # Adjusted width
-#         unsafe_allow_html=True)
-#         print('showed gif')
-
-
-
-# @st.dialog(" ")
-# def Onboarding():
-#     if 'onboarding_step' not in st.session_state:
-#         st.session_state.onboarding_step = 1
-
-#     if st.session_state.onboarding_step == 1:
-#         st.title("👋 Welcome to PICOPACHO")
-#         st.write("Please fill out the following information to continue.")
-        
-#         with st.form("onboarding_step1_form"):
-#             user_name = st.text_input("Game name", value=st.user.name)
-#             user_gender = st.selectbox("Gender", options=["Not set", "Male", "Female", "Other"])
-#             user_goal = st.text_input("What do you want to get out of PICOPACHO?", placeholder="e.g. Learn French, Explore Paris, etc.")
-
-#             submitted = st.form_submit_button("Continue", use_container_width=True, type="primary")
-#             if submitted:
-#                 st.session_state.onboarding_data = {
-#                     "name": user_name,
-#                     "gender": user_gender,
-#                     "goal": user_goal
-#                 }
-#                 st.session_state.onboarding_step = 2
-#                 st.rerun()
-
-#     elif st.session_state.onboarding_step == 2:
-#         st.title("🌐 Pick your languages")
-#         st.write("Please fill out the following information to continue.")
-
-#         default_native = "English"
-#         default_learning = "French"
-
-#         if "SupportedLanguages" not in st.session_state:
-#             st.session_state.SupportedLanguages = ["English", "French", "German", "Italian", "Spanish", "Portuguese", "Russian", "Chinese", "Japanese", "Korean", "Vietnamese", "Indonesian", "Malay", "Filipino"]
-        
-#         with st.form("onboarding_step2_form"):
-#             user_native_lang = st.selectbox("I normally speak", st.session_state.SupportedLanguages, index=st.session_state.SupportedLanguages.index(default_native))
-#             user_learning_lang = st.selectbox("I want to learn", st.session_state.SupportedLanguages, index=st.session_state.SupportedLanguages.index(default_learning))
-            
-#             submitted = st.form_submit_button("Finish", use_container_width=True, type="primary")
-#             if submitted:
-#                 onboarding_data = st.session_state.onboarding_data
-#                 st.session_state.player = {
-#                     "Name": onboarding_data["name"],
-#                     "ProfilePicture": "f'{BaseUrl}profilepictures/0.png",
-#                     "NativeLanguage": user_native_lang,
-#                     "LearningLanguage": user_learning_lang,
-#                     "Eggs": 50,
-#                     "Gender": onboarding_data["gender"],
-#                     "Goal": onboarding_data["goal"]
-#                 }
-#                 # Clean up onboarding state
-#                 keys_to_delete = [
-#                     'onboarding_step', 'onboarding_data'
-#                 ]
-#                 for key in keys_to_delete:
-#                     if key in st.session_state:
-#                         del st.session_state[key]
-#                 st.session_state.isLoading = True
-#                 st.rerun()
-        
-#st.json(st.session_state.player)
-
-
