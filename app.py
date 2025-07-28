@@ -46,6 +46,8 @@ if 'FirstRun' not in st.session_state:
 {time.time()}
 
 """)
+else:
+    st.session_state.FirstRun = False
     
 
 if 'Rerun' not in st.session_state:
@@ -113,16 +115,34 @@ def debug():
         if st.button("Fal Instant Char"):
             st.image(fal_instantChar('https://v3.fal.media/files/tiger/BkvwIkjxNmeRvsOxmXgOU.jpeg', 'Character is playing Guitar'))
 
-        if st.button("Shop", use_container_width=True, type="primary", disabled=st.session_state.isLoading):
+        if st.button("Shop"):
             cheekytoolify = {"name": "OPENSHOP", "variables": ['Dog.png', [['Dog.png', 'Doge', 100], ['imageguide1.png', 'windmill', 200], ['Melvin.png', 'eagle', 300]]]}
             Shop(cheekytoolify)
+        if st.button("Fal upload"):
+            url = fal_client.upload_file('Fallback.png')
+            st.write(url)
 
         with st.container():
-            chosenstates = ["Conversation", "toolbuffer", "player", "PoiList", "inventory", "characters", "missionList", "ShowVocab"]
-            AllTabs = st.tabs(chosenstates)
+            chosenstates = ["Conversation", "toolbuffer", "player", "PoiList", "inventory", "characters", "missionList", "ShowVocab", 'close']
+            ChosenTabs = st.tabs(chosenstates)
             for i in range(len(chosenstates)):
-                with AllTabs[i]:
-                    st.write(st.session_state[chosenstates[i]])
+                with ChosenTabs[i]:
+                    if chosenstates[i] == "close":
+                        pass
+                    else:
+                        st.write(st.session_state[chosenstates[i]])
+        
+
+        with st.container():
+            Allstates = list(st.session_state.keys())
+            AllTabs = st.tabs(Allstates)
+            for i in range(len(Allstates)):
+                try:
+                    with AllTabs[i]:
+                        st.write(st.session_state[Allstates[i]])
+                except Exception as e:
+                    st.write(f"Error displaying {Allstates[i]}: {e}")
+
 
 dialog_close_detector()
 
@@ -165,11 +185,6 @@ def FAQ():
         for FAQ in FAQs:
             with st.expander(FAQ[0]):
                 st.caption(FAQ[1])
-
-
-
-def purchase(Selection):
-    st.success('test')
 
 def Main():
     #SessionState
@@ -234,18 +249,18 @@ def Main():
     if "AvailableVoices" not in st.session_state:
         st.session_state.AvailableVoices = []
         
-    jsonfile = json.load(open('Voices.json'))
+        jsonfile = json.load(open('Voices.json'))
 
-    VoicesInLang = jsonfile.get(st.session_state.player['LearningLanguage'])
-    build_string = ""
-    for i in range(len(VoicesInLang)):
-        Name = VoicesInLang.get(str(i))[0]
-        desc = VoicesInLang.get(str(i))[1]
-        voice_id = VoicesInLang.get(str(i))[2]
+        VoicesInLang = jsonfile.get(st.session_state.player['LearningLanguage'])
+        build_string = ""
+        for i in range(len(VoicesInLang)):
+            Name = VoicesInLang.get(str(i))[0]
+            desc = VoicesInLang.get(str(i))[1]
+            voice_id = VoicesInLang.get(str(i))[2]
 
-        list = [Name, desc, voice_id]
-        st.session_state.AvailableVoices.append(list)
-        build_string += f"{Name}, {desc}\n"
+            list = [Name, desc, voice_id]
+            st.session_state.AvailableVoices.append(list)
+            build_string += f"{Name}, {desc}\n"
 
 
     if "SystemPrompt" not in st.session_state:
@@ -450,6 +465,7 @@ def ImageColorCorrect(Image):
         with open(img_name, "wb") as f:
             f.write(img_data)
         #do the pillow stuff
+        
 
         from pillowimageedit import apply_mask
         apply_mask(
@@ -460,6 +476,12 @@ def ImageColorCorrect(Image):
             color=0.97,
             sharpness=0.1
         )
+
+        from pillowimageedit import apply_multiply_layer
+        apply_multiply_layer("static/POI.png", "static/POI_Multiply.png", "static/POI.png")
+
+        from pillowimageedit import apply_dropshadow
+        apply_dropshadow("static/POI.png", "static/POI.png")
         
 
 ### Tools ###
@@ -487,6 +509,8 @@ def new_poi(tool):
         #Image = fal(f'2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel, 3d rendering. detailed and varied, asymmetrical. organic shapes, point of interest: {poi_name}. {poi_prompt}')
         #Image = fal_poi(f"point of interest:{poi_name}, isometric point of interest, detailed map tile, pixel art, medieval rpg pixel art game, moody, cinematic, gritty, {poi_prompt}")
         Image = fal_poi(f"{poi_name}, {st.session_state.player['LearningLanguage']} isometric point of interest, detailed map tile, pastel colour pallette, soft beautiful pixel art, rpg pixel art game, moody, cinematic, gritty, {poi_prompt}, 2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel. detailed and varied, asymmetrical.")
+        Image = fal_removebg(Image)
+        #print('image: ', Image)
 
         
 
@@ -569,8 +593,13 @@ def new_item(tool):
         item_image_prompt = tool['variables'][2]
         st.session_state.NotiBuffer.append([f"🎒 New Item: {item_name}", "inventory3.mp3"])
         #st.toast(f"🎒 New Item: {item_name}")
-        img = 'CityGates.png'
-        img = fal_item(f'a single pixel art {item_name}, white background, game item, full WHITE BG, game 2d texture, {item_image_prompt}')
+        
+        try:
+            #print(st.session_state.Conversation[70])
+            img = fal_item(f'a single pixel art {item_name}, pixelart game item, game 2d pixel art texture, {item_image_prompt}, pixel art style')
+        except Exception as e:
+            print(f"Error generating item image: {e}")
+            img = 'https://v3.fal.media/files/kangaroo/XuWWk6AmoGZ2xlfN45neb_Fallback.png'
         #st.success(f"💰 New Item Created: Name='{item_name}', Description='{item_description}', Image Prompt='{item_image_prompt}'")
         st.session_state.inventory.append({"name": item_name, "description": item_description, "image": img})
 
@@ -842,10 +871,13 @@ def fal_poi(prompt):
     #uploadimage = f"data:image/png;base64,{open('imageguide1.txt', 'r').read()}"
 
     # Classic
-    uploadimage = 'https://v3.fal.media/files/koala/mA0RNDOoCzbz4gXzDJF40_imageguide1.png'
+    #uploadimage = 'https://v3.fal.media/files/koala/mA0RNDOoCzbz4gXzDJF40_imageguide1.png'
 
     #fullscreen
     #uploadimage = 'https://v3.fal.media/files/penguin/iC7xWsEIRjDCZrleDc0Fi_imageguide2.jpeg'
+
+    #Mountain
+    uploadimage = 'https://v3.fal.media/files/kangaroo/P33jbXijRQp6U0yZeqkel_imageguide3.png'
 
     result = fal_client.subscribe(
         "fal-ai/hidream-i1-full/image-to-image",
@@ -873,13 +905,20 @@ def fal_poi(prompt):
     print(result['images'][0]['url'])
 
 
-    #uploader
-    #url = fal_client.upload_file('imageguide2.jpeg')
-    #print('Heres the uploadA', url)
-    
+
     
     return result['images'][0]['url']
 
+def fal_removebg(image):
+    result = fal_client.subscribe(
+    "fal-ai/bria/background/remove",
+    arguments={
+        "image_url": image
+    },
+    with_logs=True,
+    on_queue_update=on_queue_update,
+    )
+    return result['image']['url']
 
 def fal_instantChar(image, promptAction, prompt):
     #prompt = f'{prompt}, is talking on the beach'
@@ -1152,7 +1191,7 @@ def speechtotext(recording, Character):
     transcription = client.audio.transcriptions.create(
         model="gpt-4o-transcribe", 
         file=audio_file,
-        prompt= f"The person is speaking in {st.session_state.player['LearningLanguage']}, possibly {st.session_state.player['NativeLanguage']}. transcribe exactly what they say without corrections. The person is speaking to {Character.get('name', 'an unnamed character')}."
+        prompt= f"The person is speaking in {st.session_state.player['LearningLanguage']}, or possibly {st.session_state.player['NativeLanguage']}. Transcribe exactly what they say without corrections. The person is speaking to {Character}."
         
     )
     if transcription.text:
@@ -1418,7 +1457,49 @@ def Tutor_chat():
     # Initialize session state variables
     if "vocabTables" not in st.session_state:
         st.session_state.vocabTables = []
-    
+
+    def detect_markdown_tables(text):
+        """Detect and extract markdown tables from text"""
+        import re
+        
+        # Pattern to match markdown tables
+        table_pattern = r'(?:\|.*\|.*\n)+(?:\|[-\s:|]*\|.*\n)+(?:\|.*\|.*\n)*'
+        tables = re.findall(table_pattern, text, re.MULTILINE)
+        return tables
+
+    def markdown_table_to_dataframe(table_text):
+        """Convert markdown table to pandas DataFrame"""
+        lines = table_text.strip().split('\n')
+        
+        # Remove empty lines and clean up
+        lines = [line.strip() for line in lines if line.strip()]
+        
+        if len(lines) < 2:
+            return None
+        
+        # Extract headers
+        headers = [cell.strip() for cell in lines[0].split('|') if cell.strip()]
+        
+        # Skip the separator line (line 1)
+        data_lines = lines[2:]
+        
+        # Extract data rows
+        data = []
+        for line in data_lines:
+            row = [cell.strip() for cell in line.split('|') if cell.strip()]
+            if row:  # Only add non-empty rows
+                data.append(row)
+        
+        if not data:
+            return None
+        
+        # Create DataFrame
+        try:
+            df = pd.DataFrame(data, columns=headers)
+            return df
+        except Exception as e:
+            print(f"Error creating DataFrame: {e}")
+            return None
     def get_system_prompt():
         with open("TutorSystemPrompt.txt", "r", encoding="utf-8") as file:
             system_prompt = file.read()
@@ -1498,6 +1579,7 @@ def Tutor_chat():
                         st.rerun()
 
     def Run(prompt):
+        
         get_system_prompt()
         st.session_state.TutorHistory.append({"role": "user", "content": prompt})
         with chat_container:
@@ -3121,47 +3203,4 @@ if 'DifficultyOptions' not in st.session_state:
         
 #st.json(st.session_state.player)
 
-# Add these helper functions before the Tutor_chat function (around line 1340)
 
-def detect_markdown_tables(text):
-    """Detect and extract markdown tables from text"""
-    import re
-    
-    # Pattern to match markdown tables
-    table_pattern = r'(?:\|.*\|.*\n)+(?:\|[-\s:|]*\|.*\n)+(?:\|.*\|.*\n)*'
-    tables = re.findall(table_pattern, text, re.MULTILINE)
-    return tables
-
-def markdown_table_to_dataframe(table_text):
-    """Convert markdown table to pandas DataFrame"""
-    lines = table_text.strip().split('\n')
-    
-    # Remove empty lines and clean up
-    lines = [line.strip() for line in lines if line.strip()]
-    
-    if len(lines) < 2:
-        return None
-    
-    # Extract headers
-    headers = [cell.strip() for cell in lines[0].split('|') if cell.strip()]
-    
-    # Skip the separator line (line 1)
-    data_lines = lines[2:]
-    
-    # Extract data rows
-    data = []
-    for line in data_lines:
-        row = [cell.strip() for cell in line.split('|') if cell.strip()]
-        if row:  # Only add non-empty rows
-            data.append(row)
-    
-    if not data:
-        return None
-    
-    # Create DataFrame
-    try:
-        df = pd.DataFrame(data, columns=headers)
-        return df
-    except Exception as e:
-        print(f"Error creating DataFrame: {e}")
-        return None
