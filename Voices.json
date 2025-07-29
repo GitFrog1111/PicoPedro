@@ -8,17 +8,21 @@
         "5": ["Ava", "youthful and well-spoken female German voice", "AnvlJBAqSLDzEevYr9Ap"]
     },
     "French": {
-        "0": ["Nova", "deep and relaxedfrench voice, Male, 30yo", "BVBq6HVJVdnwOMJOqvy9"],
+        "0": ["Nova", "deep and relaxed french voice, Male, 30yo", "BVBq6HVJVdnwOMJOqvy9"],
         "1": ["Lisa", "slow and engaging french voice, Female, 30yo", "8CTLpN48bGgqEvWB4x4g"],
         "2": ["Alexandre", "Male, upbeat and confident, male 25yo", "IPgYtHTNLjC7Bq7IPHrm"],
         "3": ["Celine", "soothing and approachable, French female voice with standard accent", "DOqLhiOMs8JmafdomNTP"]
     },
+    "Italian": {
+        "0": ["Nova", "deep and relaxed Italian voice, Male, 30yo", "BVBq6HVJVdnwOMJOqvy9"],
+        "1": ["Lisa", "slow and engaging Italian voice, Female, 30yo", "8CTLpN48bGgqEvWB4x4g"],
+        "2": ["Alexandre", "Male, upbeat and confident, male 25yo", "IPgYtHTNLjC7Bq7IPHrm"],
+        "3": ["Celine", "soothing and approachable, Italian female voice with standard accent", "DOqLhiOMs8JmafdomNTP"]
+    },
     "English": {
         "0": ["Martin", "deep, warm, and professional male voice", "s1TxC2vO0GyTuonQQhm4"],
-        "1": ["Tommy Pro", "calm North German voice without dialect, male", "iNmg5TuXskrU3jUtYXW5"],
-        "2": ["Lucy Fennek", "professional youthful German conversational voice, female", "KXxZd16DiBqt82nbarJx"],
-        "3": ["Eliza", "female, 20s-30s, opinionated and confident, yet soft", "dCnu06FiOZma2KVNUoPZ"],
-        "4": ["Emilia", "young, charming German female voice with standard accent", "ghgFyr7gmpr57xyTgX9q"],
-        "5": ["Ava", "youthful and well-spoken female German voice", "AnvlJBAqSLDzEevYr9Ap"]
+        "1": ["Tommy Pro", "calm North English voice without dialect, male", "iNmg5TuXskrU3jUtYXW5"],
+        "2": ["Lucy Fennek", "professional youthful English conversational voice, female", "KXxZd16DiBqt82nbarJx"],
+        "3": ["Eliza", "female, 20s-30s, opinionated and confident, yet soft", "dCnu06FiOZma2KVNUoPZ"]
     }
 }

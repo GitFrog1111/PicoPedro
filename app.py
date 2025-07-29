@@ -930,7 +930,7 @@ def ChangeMoney(tool):
     amount = float(tool['variables'][0])
     print('amount: ', amount)
     if st.session_state.player['Money'] + amount < 0:
-        st.session_state.Conversation.append({"role": "assistant", "content": f"<thinking> Oops, looks like You don't have enough money to do that\nTool aborted\nmoney: {st.session_state.player['Money']}</thinking>"})
+        st.session_state.Conversation.append({"role": "assistant", "content": f"<thinking> Oops, looks like the player doesn't have enough money to do that\nTool aborted\nmoney: {st.session_state.player['Money']}</thinking>"})
         AI(st.session_state.Conversation)
         return
     st.session_state.player['Money'] += amount
@@ -1719,7 +1719,7 @@ def character_chat(Character):
 
                     if tool['name'].upper() == 'UPDATE_CHARACTER_IMAGE':
                         if tool['variables'][0].upper() == Character.get('name', 'an unnamed character').upper():
-                            prompt = f'PixArFK style, portrait of {Character.get('name')}, {Character.get('description').split("Image")[0]} pixel art, close up view on character. game character icon, pixel art, shoulders-up shot, 3/4 view, jrpg style character icon of a German person'
+                            prompt = f'PixArFK style, portrait of {Character.get('name')}, {Character.get('description').split("Image")[0]} pixel art, close up view on character. game character icon, pixel art, shoulders-up shot, 3/4 view, jrpg style character icon of a {st.session_state['LearningLanguage']} person'
                             promptAction = tool['variables'][1]
 
                             print(f"Updating character image for {Character.get('name')}: {promptAction}")
@@ -3115,9 +3115,9 @@ def Onboarding(id = None):
 
                 langcols = st.columns(2)
                 with langcols[0]:
-                    Nativelang = st.selectbox("I normally speak", options=["English", "French", "German"], index=0)
+                    Nativelang = st.selectbox("I normally speak", options=["English", "French", "German", "Italian"], index=0)
                 with langcols[1]:
-                    Learninglang = st.selectbox("I want to learn", options=["English", "French", "German"], index=1)
+                    Learninglang = st.selectbox("I want to learn", options=["English", "French", "German", "Italian"], index=1)
 
                 Difficulty = st.select_slider("Difficulty", options=st.session_state.DifficultyOptions, value='Beginner')
             
@@ -3274,9 +3274,6 @@ def Onboarding(id = None):
     OnboardingEmpty = st.empty()
     RenderOnboarding()   
 
-
-    
-    
 
 
 @st.dialog(" ")
@@ -3459,7 +3456,7 @@ else:
         st.markdown("<p style='text-align: center; color: grey; margin-top: -10px; font-size: 14px;'>By continuing, you agree to our <a href='https://www.picopacho.com/privacy_policy' target='_blank'>Privacy Policy</a> and <a href='https://www.picopacho.com/terms_of_service' target='_blank'>Terms of Service</a>.</p>", unsafe_allow_html=True)
 
 if "SupportedLanguages" not in st.session_state:
-    st.session_state.SupportedLanguages = ["English", "French", "German"]
+    st.session_state.SupportedLanguages = ["English", "French", "German", "Italian"]
 
 if 'DifficultyOptions' not in st.session_state:
     st.session_state.DifficultyOptions = ["Completely New", "I know some basics", "Beginner", "Conversational", "Intermediate", "Advanced", "Fluent"]
