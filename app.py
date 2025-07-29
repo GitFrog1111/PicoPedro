@@ -1577,6 +1577,8 @@ def character_chat(Character):
     if Character.get('is_following', False):
         with center:
             st.markdown(f"<p style='text-align: center; color: grey; margin-top: -18px; font-size: 14px;'>👥</p>", unsafe_allow_html=True)
+    
+    Speaker = st.empty()
 
 
     # Ensure 'convoHistory' key exists in the Character dictionary, initializing if necessary.
@@ -1588,7 +1590,7 @@ def character_chat(Character):
 
     # Placeholder for the chat messages area
     chat_messages_placeholder = st.empty()
-    Speaker = st.empty()
+    #Speaker = st.empty()
     def render_current_messages():
         with chat_messages_placeholder.container(): # Use .container() on the placeholder
             if Character.get('convoHistory', []) == []:
@@ -1671,17 +1673,21 @@ def character_chat(Character):
     #user_input = st.chat_input('Your message...', key=f'chat_input_{chat_input_key_suffix}', disabled=st.session_state.isLoading)
     progress_bar = st.empty()
 
-    UserAudioInput = st.audio_input(f"Speak to {Character.get('name', 'an unnamed character')}...", key=f'audio_input_{chat_input_key_suffix}')
-    
-        #UserMessageText = Stt(UserInput)
-        #response = ai(UserMessageText)
-        #speech = text_to_speech_file(response)
-        #st.audio(speech)
+##############
+    UserAudioInput = st.audio_input(f"", key=f'audio_input_{chat_input_key_suffix}')
+    user_input = st.chat_input(placeholder = f'Talk to {Character.get('name', 'an unnamed character')}', key=f'chat_input_{chat_input_key_suffix}', disabled=st.session_state.isLoading)
 
+    
     if UserAudioInput:
         progress_bar.progress(0.1)
         UserMessageText = speechtotext(UserAudioInput, Character.get('name', 'an unnamed character'))
         progress_bar.progress(0.3)
+    if user_input:
+        progress_bar.progress(0.3)
+        UserMessageText = user_input
+##########################
+
+    if UserAudioInput or user_input:
 
         # 1. Add user message to history
         Character['convoHistory'].append({"role": "user", "content": UserMessageText})
@@ -1719,7 +1725,7 @@ def character_chat(Character):
 
                     if tool['name'].upper() == 'UPDATE_CHARACTER_IMAGE':
                         if tool['variables'][0].upper() == Character.get('name', 'an unnamed character').upper():
-                            prompt = f'PixArFK style, portrait of {Character.get('name')}, {Character.get('description').split("Image")[0]} pixel art, close up view on character. game character icon, pixel art, shoulders-up shot, 3/4 view, jrpg style character icon of a {st.session_state['LearningLanguage']} person'
+                            prompt = f'PixArFK style, portrait of {Character.get('name')}, {Character.get('description').split("Image")[0]} pixel art, close up view on character. game character icon, pixel art, shoulders-up shot, 3/4 view, jrpg style character icon of a {st.session_state.player['LearningLanguage']} person'
                             promptAction = tool['variables'][1]
 
                             print(f"Updating character image for {Character.get('name')}: {promptAction}")
@@ -3335,6 +3341,7 @@ def CheckSub():
         BaserowDB("update row", "Users", st.session_state.player['ID'], Data = {
             "IsSubscribed": BoolSubscribed
         })
+        
 
     return BoolSubscribed
 

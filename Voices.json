@@ -3,26 +3,32 @@
         "0": ["Martin", "deep, warm, and professional male voice", "s1TxC2vO0GyTuonQQhm4"],
         "1": ["Tommy Pro", "calm North German voice without dialect, male", "iNmg5TuXskrU3jUtYXW5"],
         "2": ["Lucy Fennek", "professional youthful German conversational voice, female", "KXxZd16DiBqt82nbarJx"],
-        "3": ["Eliza", "female, 20s-30s, opinionated and confident, yet soft", "dCnu06FiOZma2KVNUoPZ"],
-        "4": ["Emilia", "young, charming German female voice with standard accent", "ghgFyr7gmpr57xyTgX9q"],
-        "5": ["Ava", "youthful and well-spoken female German voice", "AnvlJBAqSLDzEevYr9Ap"]
+        "3": ["Amilia", "young, charming female voice with standard accent", "ZF6FPAbjXT4488VcRRnw"],
+        "4": ["Antonio", "Middle aged man soft and charming", "uScy1bXtKz8vPzfdFsFw"],
+        "5": ["Archer", "young, charming male voice with standard accent", "Fahco4VZzobUeiPqni1S"],
+        "6": ["Milly", "cute fun 20yo, female", "VD1if7jDVYtAKs4P0FIY"],
+        "7": ["Riya", "professional 30yo confident, female", "mActWQg9kibLro6Z2ouY"]
     },
     "French": {
-        "0": ["Nova", "deep and relaxed french voice, Male, 30yo", "BVBq6HVJVdnwOMJOqvy9"],
-        "1": ["Lisa", "slow and engaging french voice, Female, 30yo", "8CTLpN48bGgqEvWB4x4g"],
-        "2": ["Alexandre", "Male, upbeat and confident, male 25yo", "IPgYtHTNLjC7Bq7IPHrm"],
-        "3": ["Celine", "soothing and approachable, French female voice with standard accent", "DOqLhiOMs8JmafdomNTP"]
+        "1": ["Alexandre", "Male, upbeat and confident, male 25yo", "IPgYtHTNLjC7Bq7IPHrm"],
+        "2": ["Antonio", "Middle aged man soft and charming", "uScy1bXtKz8vPzfdFsFw"],
+        "3": ["Amilia", "young, charming female voice with standard accent", "ZF6FPAbjXT4488VcRRnw"]
     },
     "Italian": {
-        "0": ["Nova", "deep and relaxed Italian voice, Male, 30yo", "BVBq6HVJVdnwOMJOqvy9"],
-        "1": ["Lisa", "slow and engaging Italian voice, Female, 30yo", "8CTLpN48bGgqEvWB4x4g"],
+        "0": ["Milly", "cute fun 20yo, female", "VD1if7jDVYtAKs4P0FIY"],
+        "1": ["Riya", "professional 30yo confident, female", "mActWQg9kibLro6Z2ouY"],
         "2": ["Alexandre", "Male, upbeat and confident, male 25yo", "IPgYtHTNLjC7Bq7IPHrm"],
-        "3": ["Celine", "soothing and approachable, Italian female voice with standard accent", "DOqLhiOMs8JmafdomNTP"]
+        "3": ["Antonio", "Middle aged man soft and charming", "uScy1bXtKz8vPzfdFsFw"],
+        "4": ["Archer", "young, charming male voice with standard accent", "Fahco4VZzobUeiPqni1S"]
     },
     "English": {
         "0": ["Martin", "deep, warm, and professional male voice", "s1TxC2vO0GyTuonQQhm4"],
         "1": ["Tommy Pro", "calm North English voice without dialect, male", "iNmg5TuXskrU3jUtYXW5"],
         "2": ["Lucy Fennek", "professional youthful English conversational voice, female", "KXxZd16DiBqt82nbarJx"],
-        "3": ["Eliza", "female, 20s-30s, opinionated and confident, yet soft", "dCnu06FiOZma2KVNUoPZ"]
+        "3": ["Eliza", "female, 20s-30s, opinionated and confident, yet soft", "dCnu06FiOZma2KVNUoPZ"],
+        "4": ["Amilia", "young, charming female voice with standard accent", "ZF6FPAbjXT4488VcRRnw"],
+        "5": ["Archer", "young, charming male voice with standard accent", "Fahco4VZzobUeiPqni1S"],
+        "6": ["Milly", "cute fun 20yo, female", "VD1if7jDVYtAKs4P0FIY"],
+        "7": ["Riya", "professional 30yo confident, female", "mActWQg9kibLro6Z2ouY"]
     }
 }
