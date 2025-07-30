@@ -1,0 +1,43 @@
+ #             st.button(" ", key = 'Info', icon = ":material/help:", type = "tertiary", use_container_width=True, help = """Objective
+    # Outwit and outbluff your opponents by playing your cards in an ascending order—real or fake. Build the pot, survive accusations, and walk away with the gold.
+
+    # Setup
+    # Deck: Standard 52-card deck.
+
+    # Hands: Each player is dealt 5 cards.
+
+    # Pot: Each player then antes 10 gold into the pot to begin the round.
+
+    # Starting Card: Always begins with 5 as the “first claimed rank.”
+
+    # Turn Rules
+    # Player Action:
+
+    # On your turn, play 1 card 'face-down' and declare it as the next value up in the sequence.
+
+    # Example: Starting with 5, next player declares “6,” then “7,” etc.
+
+    # You may lie.
+
+    # Rank Progression:
+
+    # Claimed values go up: 5 → 6 → 7 → … → Ace
+
+    # Calling “Liar”:
+
+    # Any player may call “Liar!” immediately after a card is played.
+
+    # If the card matches the declared rank: The caller was wrong.
+    # → The pot goes to the called player
+
+    # If the card does not match the declared rank: The liar is caught.
+    # → The caller takes the entire pot.
+
+    # Round resets after a Liar call (everyone re-antes).
+
+    # End-of-Round Reset:
+
+    # If any player runs out of cards, the round ends.
+    # → Pot is split evenly among the players.
+
+    # New round begins with another ante, fresh cards, and reset starting claim (5).""")

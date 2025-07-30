@@ -2,152 +2,200 @@ import streamlit as st
 import random
 from typing import List, Dict, Optional
 import time
+import uuid
 
 st.set_page_config(layout="wide")
 
 st.title("Rogues Gambit")
-st.session_state.currentCard = 5
+
 DeckOfCards = ['2 ♠', '2 ♥', '2 ♦', '2 ♣', '3 ♠', '3 ♥', '3 ♦', '3 ♣', '4 ♠', '4 ♥', '4 ♦', '4 ♣', '5 ♠', '5 ♥', '5 ♦', '5 ♣', '6 ♠', '6 ♥', '6 ♦', '6 ♣', '7 ♠', '7 ♥', '7 ♦', '7 ♣', '8 ♠', '8 ♥', '8 ♦', '8 ♣', '9 ♠', '9 ♥', '9 ♦', '9 ♣', '10 ♠', '10 ♥', '10 ♦', '10 ♣', 'J ♠', 'J ♥', 'J ♦', 'J ♣', 'Q ♠', 'Q ♥', 'Q ♦', 'Q ♣', 'K ♠', 'K ♥', 'K ♦', 'K ♣', 'A ♠', 'A ♥', 'A ♦', 'A ♣', '🏵', '🏵']
 
 @st.dialog(title="Rogues Gambit")
-def RoguesGambit():
-    LTable, MTable, RTable = st.columns([1, 5, 1])
-    with LTable:
-        st.container(border = False, height=150)
-        st.image("Dog.png", caption = "Dog")
-    with MTable:
-        _, mid, _ = st.columns([2, 1, 2])
-        with mid:
-            st.image("Melvin.png", caption = "Melvin")
+def RoguesGambit(players):
+    #Helper funcs
+    def GetDecorator(card):
+        d = ""
+        if "2" in card:
+            d = ".."
+        elif "3" in card:
+            d = "..."
+        elif "4" in card:
+            d = "::"
+        elif "5" in card:
+            d = ":.:"
+        elif "6" in card:
+            d = ":..:"
+        elif "7" in card:
+            d = ":...:"
+        elif "8" in card:
+            d = "::::"
+        elif "9" in card:
+            d = "::.::"
+        elif "10" in card:
+            d = ":::::"
+        elif "J" in card:
+            d = "🐾"
+        elif "Q" in card:
+            d = "🌺"
+        elif "K" in card:
+            d = "💠"
+        elif "A" in card:
+            d = "🔰"
+        #joker - can be any value
+        if "🏵" in card:
+            d = "🏵"
+        return d
 
-        Table = st.container(border = True)
-        with Table:
-            _, mid, _ = st.columns([2, 2, 2])
-            with mid:
-                st.container(border = False, height=10) #v padding
-                
-                CurrentCard = st.empty()
-                CurrentCard.metric(label = '', value = f"{st.session_state.currentCard}", border = True)
-                st.caption("Pot: 0")
+    def sorthand(hand):
+        handindexes = []
+        for i in range(len(hand)):
+            handindexes.append(DeckOfCards.index(hand[i]))
+        handindexes.sort()
+        hand.clear()
+        for j in range(len(handindexes)):
+            hand.append(DeckOfCards[handindexes[j]])
+        return hand
 
-        _, mid, _ = st.columns([2, 2, 2])
+    #Main game
+    def RenderTable():
+        if 'TableEmpty' not in st.session_state.RG:
+            TableEmpty = st.empty()
+            st.session_state.RG['TableEmpty'] = TableEmpty
         
-        with mid:
-            st.button("Liar!", type = "primary", use_container_width=True)
-    with RTable:
-        st.button(" ", key = 'Info', icon = ":material/help:", type = "tertiary", use_container_width=True, help = """Objective
-Outwit and outbluff your opponents by playing your cards in an ascending order—real or fake. Build the pot, survive accusations, and walk away with the gold.
+        with st.session_state.RG['TableEmpty']:
+            with st.container():
+                LTable, MTable, RTable = st.columns([1, 5, 1])
+                with LTable:
+                    st.container(border = False, height=150)
+                    st.image(players[0]['Image'], caption = players[0]['Name'])
+                    TurnMarkerA = st.empty()
+                with MTable:
+                    _, mid, _ = st.columns([2, 1, 2])
+                    with mid:
+                        st.image(players[1]['Image'], caption = players[1]['Name'])
+                        TurnMarkerB = st.empty()
 
-Setup
-Deck: Standard 52-card deck.
+                    Table = st.container(border = True)
+                    with Table:
+                        _, mid, _ = st.columns([2, 2, 2])
+                        with mid:
+                            st.container(border = False, height=10) #v padding
+                            
+                            CurrentCard = st.empty()
+                            CurrentCard.metric(label = '', value = f"{st.session_state.RG['currentCard']}", border = True)
+                            st.caption(f"Pot: {st.session_state.RG['pot']}")
 
-Hands: Each player is dealt 10 cards.
+                    _, mid, _ = st.columns([2, 2, 2])
+                    
+                    with mid:
+                        st.button("Liar!", type = "primary", key = f'Liar_{uuid.uuid4()}', use_container_width=True)
+                with RTable:
+                    st.container(border = False, height=150)
+                    st.image(players[2]['Image'], caption = players[2]['Name'])
+                    TurnMarkerc = st.empty()
 
-Pot: Each player antes (e.g. 5–10 gold) into the pot to begin the round.
-
-Starting Card: Always begins with 5 as the “first claimed rank.”
-
-Turn Rules
-Player Action:
-
-On your turn, play 1 card face-down and declare it as the next value up in the sequence.
-
-Example: Starting with 5, next player declares “6,” then “7,” etc.
-
-You may lie.
-
-Rank Progression:
-
-Claimed values go up: 5 → 6 → 7 → … → Ace → back to 2.
-
-Wraps after Ace (A → 2 → 3 → ... 5, etc.)
-
-Calling “Liar”:
-
-Any player may call “Liar!” immediately after a card is played.
-
-If the card matches the declared rank: The caller was wrong.
-→ The pot is split among all other players.
-
-If the card does not match the declared rank: The liar is caught.
-→ The caller takes the entire pot.
-
-Round resets after a Liar call (everyone re-antes).
-
-End-of-Round Reset:
-
-If the claimed rank reaches Ace and no Liar was called, the pot is split evenly among all players.
-
-If any player runs out of cards, round ends.
-→ Pot is split evenly among remaining players.
-
-New round begins with another ante and reset starting claim (5).""")
-        st.container(border = False, height=150-50)
-        st.image("Mia.png", caption = "Mia")
-
+        
     
-    NumberOfStartingCards = 10
-    
-    st.session_state.hand = [random.choice(DeckOfCards) for _ in range(NumberOfStartingCards)]
-    st.session_state.hand = sorthand(st.session_state.hand)
-    
-    Pad, H, Pad = st.columns([1, 10, 1])
-    with H:
-        Hand = st.empty()
-        with Hand:
+    def DealCards():
+        print("dealing cards")
+        NumberOfStartingCards = 5
+        #create copy of deck
+        TheDeck = DeckOfCards.copy()
+        #shuffle deck
+        random.shuffle(TheDeck)
+        #deal cards to players
+        for player in players:
+            if player not in st.session_state.RG['players']:
+                st.session_state.RG['players'].append(player)
+            for i in range(NumberOfStartingCards):
+                player['hand'].append(TheDeck.pop())
+
+        #deal cards to human
+        for i in range(NumberOfStartingCards):
+            st.session_state.RG['hand'].append(TheDeck.pop())
+        st.session_state.RG['hand'] = sorthand(st.session_state.RG['hand'])
+        print("dealt cards")
+        print("players: ", st.session_state.RG['players'])
+        print("hand: ", st.session_state.RG['hand'])
+
+    def RenderPlayer():
+        print("rendering player")
+        Pad, H, Pad = st.columns([1, 10, 1])
+        with H:
             handcols = st.columns(5)
-        for i in range(5):
-            with handcols[i]:
-                st.button(f"{st.session_state.hand[i]}\n\n {GetDecorator(st.session_state.hand[i])}", key = f"hand{i}", type = "secondary", use_container_width=True)
-                st.button(f"{st.session_state.hand[i+5]}\n\n {GetDecorator(st.session_state.hand[i+5])}", key = f"hand{i+5}", type = "secondary", use_container_width=True)
-                i+=1
-def GetDecorator(card):
-    d = ""
-    if "2" in card:
-        d = ".."
-    elif "3" in card:
-        d = "..."
-    elif "4" in card:
-        d = "::"
-    elif "5" in card:
-        d = ":.:"
-    elif "6" in card:
-        d = ":..:"
-    elif "7" in card:
-        d = ":...:"
-    elif "8" in card:
-        d = "::::"
-    elif "9" in card:
-        d = "::.::"
-    elif "10" in card:
-        d = ":::::"
-    elif "J" in card:
-        d = "🐾"
-    elif "Q" in card:
-        d = "🌺"
-    elif "K" in card:
-        d = "💠"
-    elif "A" in card:
-        d = "🔰"
-    if "🏵" in card:
-        d = "🏵"
-    return d
+            for i in range(5):
+                with handcols[i]:
+                    print("printing hand: ", st.session_state.RG['hand'][i])
+                    st.button(f"{st.session_state.RG['hand'][i]}\n\n {GetDecorator(st.session_state.RG['hand'][i])}", key = f"hand{i}_{uuid.uuid4()}", type = "secondary", use_container_width=True)
+
+    
+    def AiPlayerTurns():
+        print("ai player turns")
+        for player in st.session_state.RG['players']:
+            with st.spinner(f"{player['Name']} is thinking..."):
+                print(f"{player['Name']} is thinking...")
+                time.sleep(1)
+
+            player['hand'].remove(random.choice(player['hand']))
+            st.session_state.RG['currentCard'] +=1
+            RenderTable()
+            
+            
+
+                
+            
+    def Play():
+        #st.session_state.RG['gameState'] = "Playing"
+        print("rendering table")
+        RenderTable()
+        print("rendered table")
+        RenderPlayer()
+        AiPlayerTurns()
+        #HumanPlayerTurn()
+        #CheckForEnd()
+        #Play()
+
+        
+    def StartGame(players):
+        #create new game state
+        st.session_state.RG = {
+            'gameState': "Start",
+            'players': players,
+            'table': [],
+            'hand': [],
+            'pot': 0,
+            'currentCard': 2
+        }
+        DealCards()
+        
+        
+
+    #if first run    
+    if 'RG' not in st.session_state:
+        print("--------------------------------first run--------------------------------")
+        StartGame(testplayers)
+    if st.session_state.RG['gameState'] == "Start":
+        Play()
 
 
-def sorthand(hand):
-    handindexes = []
-    for i in range(len(hand)):
-        handindexes.append(DeckOfCards.index(hand[i]))
-    handindexes.sort()
-    hand.clear()
-    for j in range(len(handindexes)):
-        hand.append(DeckOfCards[handindexes[j]])
-    return hand
 
-if st.button("Open Dialog"):
-    RoguesGambit()
+testplayers = [
+    {
+        "Name": 'Dog',
+        "Image": 'Dog.png',
+        "hand": []
+    },
+    {
+        "Name": 'Melvin',
+        "Image": 'Melvin.png',
+        "hand": []
+    },
+    {
+        "Name": 'Mia',
+        "Image": 'Mia.png',
+        "hand": []
+    }
+]
+if st.button("Start Game",use_container_width=True):
+    RoguesGambit(testplayers)
 
-
-t, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _= st.columns(19)
-with t:
-    st.button('🏵\n\n🏵', type = "secondary")
