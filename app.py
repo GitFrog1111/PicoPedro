@@ -510,7 +510,7 @@ def dispatch_tool(tool):
             character_chat(tool['variables'][0])
             pass
     except Exception as e:
-        print(f"Error in dispatch_tool: {e}")
+        print(f"Error in dispatch_tool: {e}\ntool: {tool}")
 
 
 def handle_tools(tools):
@@ -3154,8 +3154,14 @@ def Onboarding(id = None):
         
         elif step == 4:
             with st.form(key = 'onboarding_form4', border = False):
-                st.write("🦉 placeholder slide for cool animation")
-                st.container(border=False, height=200)
+                st.write("Chat with Professor Pacho to get some key words, ask questions or just chat about your game!")
+                st.container(border=False, height=100)
+                cols = st.columns([1, 1, 1])
+                with cols[1]:
+                    st.image("app/static/tutorgif.gif", use_container_width=True)
+                
+                st.container(border = False, height=100)
+                
                 if st.form_submit_button("Next", type = 'primary', use_container_width=True):
                     st.session_state.onboarding_step = 5
                     st.rerun()
@@ -3180,7 +3186,7 @@ def Onboarding(id = None):
                 "Space": {
                     "img": "space.jpeg",
                     "caption": "A Space Odyssey",
-                    "prompt": "Set in space, 2130. A world of robots, aliens and spaceships"
+                    "prompt": "Set in space, 2130. A world of robots, aliens and spaceships, start next to a crashed ship with 3 crewmates on saturns moon Titan"
                 },
                 "Medieval": {
                     "img": "medieval.jpeg",

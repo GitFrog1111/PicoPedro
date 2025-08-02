@@ -51,6 +51,7 @@ you can call multiple tools in one response with newlineslike this:
 
 🗺️ New POI
 [new_poi|name|list of objects|coordinates]
+- Name it something specific and intriguing. ❌'The pirate's hideout' ✅'Scally's Freeport'
 - describe the POI in detail, list every object you want in the image, as many as possible. only visuals you want in the image.
 - the coordinates should stay within the range of -100 to 100. x is west to east, y is north to south. start at 50, 50 and work outwards.
 Example:
