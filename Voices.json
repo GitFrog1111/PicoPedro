@@ -10,9 +10,10 @@
         "7": ["Riya", "professional 30yo confident, female", "mActWQg9kibLro6Z2ouY"]
     },
     "French": {
-        "1": ["Alexandre", "Male, upbeat and confident, male 25yo", "IPgYtHTNLjC7Bq7IPHrm"],
-        "2": ["Antonio", "Middle aged man soft and charming", "uScy1bXtKz8vPzfdFsFw"],
-        "3": ["Amilia", "young, charming female voice with standard accent", "ZF6FPAbjXT4488VcRRnw"]
+        "0": ["Alexandre", "Male, upbeat and confident, male 25yo", "IPgYtHTNLjC7Bq7IPHrm"],
+        "1": ["Antonio", "Middle aged man soft and charming", "uScy1bXtKz8vPzfdFsFw"],
+        "2": ["Amilia", "young, charming female voice with standard accent", "ZF6FPAbjXT4488VcRRnw"],
+        "3": ["Riya", "professional 30yo confident, female", "mActWQg9kibLro6Z2ouY"]
     },
     "Italian": {
         "0": ["Milly", "cute fun 20yo, female", "VD1if7jDVYtAKs4P0FIY"],

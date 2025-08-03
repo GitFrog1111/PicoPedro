@@ -46,6 +46,7 @@ if 'FirstRun' not in st.session_state:
 {time.time()}
 
 """)
+    st.session_state.Guest = False
 else:
     st.session_state.FirstRun = False
     
@@ -505,7 +506,8 @@ def dispatch_tool(tool):
         elif tool['name'].upper() == 'CHANGE_MONEY':
             ChangeMoney(tool)
         elif tool['name'].upper() == 'LEVELUP':
-            Levelup()
+            pass
+            #Levelup()
         elif tool['name'].upper() == 'MESSAGE_AS_CHARACTER':
             character_chat(tool['variables'][0])
             pass
@@ -582,7 +584,7 @@ def new_poi(tool):
         poi_coordinates = f"{x},{y}"
         
         # Generate POI prompt for image generation
-        full_prompt = f"{poi_name}, {st.session_state.player['LearningLanguage']} isometric point of interest, detailed map tile, pastel colour pallette, soft beautiful pixel art, rpg pixel art game, moody, cinematic, gritty, {poi_prompt}, 2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel. detailed and varied, asymmetrical."
+        full_prompt = f"{poi_name}, {st.session_state.player['LearningLanguage']} isometric point of interest, detailed map tile, pastel colour pallette, soft beautiful pixel art, rpg pixel art game, Hyperrealism, moody, cinematic, gritty, {poi_prompt}, 2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel. detailed and varied, asymmetrical."
         
         Image = fal_poi(full_prompt)
         
@@ -1347,6 +1349,28 @@ def ProcessCommand(command):
     print(response)
     return character_to_chat
 
+@st.dialog(" ")
+def GuestModeChill():
+    st.title("🎉 Thanks for trying out PICOPACO!")
+    st.write("You've reached the guest mode move limit. Sign up to customise your experience!")
+    cols = st.columns(2)
+    with cols[0]:
+        if st.button("Main menu", icon = ":material/home:", key="GuestModeChill", use_container_width=True, type="secondary"):
+            NewGame()
+    with cols[1]:
+        if st.button("Sign up", icon=":material/person_add:", key="GuestModeChillSignup", use_container_width=True, type="primary"):
+            st.login(provider="google")
+    st.stop()
+
+
+
+
+if 'guestcap' not in st.session_state:
+    st.session_state.guestcap = 0
+if st.session_state.guestcap <= -25:
+    GuestModeChill()
+    
+
 def ChangeEggs(amount):
     #apply the change
     #check if its reset time
@@ -1354,6 +1378,13 @@ def ChangeEggs(amount):
     #reset eggs
 
     #update egss locally
+
+
+    if st.session_state.Guest:
+        print('guestcap:', st.session_state.guestcap)
+        st.session_state.guestcap += amount
+        return
+    
     if 'IsSubscribed' in st.session_state.player and st.session_state.player['IsSubscribed'] == False:
         st.session_state.player['Eggs'] += amount
 
@@ -1958,7 +1989,7 @@ def Tutor_chat():
                     stream=True,
                 )
                 response = st.write_stream(stream)
-                ChangeEggs(-1)
+                #ChangeEggs(-1)
                 tools = check_for_tools(response)
                 if tools:
                     handle_tools(tools)
@@ -2517,7 +2548,7 @@ def Mission_box():
                     st.session_state.Conversation.append({"role": "assistant", "content": "[MissionRefresh]\nThe player has clicked the refresh missions button, indicating they believe they have completed one or more missions. After this usercontext I should call the complete mission tool on completed tasks"})
                     AI(st.session_state.Conversation)
                 else:
-                    st.toast("No missions complete")
+                    st.toast("No more missions complete")
         # Use the main column for the Mission entry input
         # Display existing entries with yellow background
         with missionbuttoncols[5]:
@@ -2632,38 +2663,41 @@ def renderMainUI():
     Tool1, _pad1, Tool2, _pad2, Tool3 = st.columns([1, 1, 4, 1, 1])
 
     # Gems
-    with Tool1:
-        AccountBut, EggsBut = st.columns([1, 2])
-        with AccountBut:
-            if st.button(" ", icon=":material/account_circle:", key="AccountBut", use_container_width=True, type="tertiary", disabled=st.session_state.isLoading):
-                AccountModal()    
-    
-        if st.session_state.player['IsSubscribed'] == False:
-            with EggsBut:
-            
-                time_difference = TimeUntil(st.session_state.player["EggsReset"])
+    if not st.session_state.Guest:
+        with Tool1:
+            AccountBut, EggsBut = st.columns([1, 2])
+            with AccountBut:
+                if st.button(" ", icon=":material/account_circle:", key="AccountBut", use_container_width=True, type="tertiary", disabled=st.session_state.isLoading):
+                    AccountModal()    
+        
+            if st.session_state.player['IsSubscribed'] == False:
+                with EggsBut:
                 
-                hours = time_difference / 3600
-                minutes = (hours-int(hours))*60
-                seconds = (minutes-int(minutes))*60
+                    time_difference = TimeUntil(st.session_state.player["EggsReset"])
+                    
+                    hours = time_difference / 3600
+                    minutes = (hours-int(hours))*60
+                    seconds = (minutes-int(minutes))*60
 
-                helpstring = f"Stars refresh in {int(hours)} h : {int(minutes)} m"
-                if minutes < 0:
-                    helpstring = " "
-                if st.button(f"{st.session_state.player['Eggs']}", icon=":material/star_shine:", key="GemBut", use_container_width=True, type="tertiary", disabled=st.session_state.isLoading, help = helpstring):
-                    SoundEngine("click.mp3")
-                    Subscribe_modal()
+                    helpstring = f"Stars refresh in {int(hours)} h : {int(minutes)} m"
+                    if minutes < 0:
+                        helpstring = " "
+                    if st.button(f"{st.session_state.player['Eggs']}", icon=":material/star_shine:", key="GemBut", use_container_width=True, type="tertiary", disabled=st.session_state.isLoading, help = helpstring):
+                        SoundEngine("click.mp3")
+                        Subscribe_modal()
 
                 #st.markdown(f"<p style='text-align: center; margin-top: 6px; color: grey;'>{st.session_state.player['Eggs']}</p>", unsafe_allow_html=True)
+    else:
+        with Tool1:
+            st.caption("Guest mode")
+
     # Name of POI
     with Tool2:
         _, Name, _ = st.columns([1, 4, 1])
-        #with Name:
-            #st.container(border=False, height=10)
+        with Name:
             
-
-        #st.subheader("City Gates")
-        #st.markdown("<h5 style='text-align: center; color: black;'>City Gates</h5>", unsafe_allow_html=True)
+            
+            st.markdown(f"<b><h5 style='text-align: center; color: black; margin-top: -20px;'>{st.session_state.POI['Name']}</h5></b>", unsafe_allow_html=True)
 
     # Map,Mission,Inventory
     with Tool3:
@@ -2813,8 +2847,9 @@ def renderMainUI():
         # st.container(border=False, height=10)
         #st.markdown(f"<b><h5 style='text-align: center; color: black;'>{st.session_state.POI['Name']}</h5></b>", unsafe_allow_html=True)
         #st.container(border=False, height=5)
-        st.markdown(f""" <img src='app/static/Logos/Logo_Whiteout_Med.png' style="width: 20%; height: 20%; margin-top: -150px; display: block; margin-left: auto; margin-right: auto;"> """, unsafe_allow_html=True)
-        st.markdown(f"<b><h5 style='text-align: center; color: black; margin-top: -20px;'>{st.session_state.POI['Name']}</h5></b>", unsafe_allow_html=True)
+        st.markdown(f""" <img src='app/static/Logos/Logo_Whiteout_Med.png' style="width: 20%; height: 20%; margin-top: -130px; display: block; margin-left: auto; margin-right: auto;"> """, unsafe_allow_html=True)
+        #st.markdown(f"<b><h5 style='text-align: center; color: black; margin-top: -20px;'>{st.session_state.POI['Name']}</h5></b>", unsafe_allow_html=True)
+        st.container(border=False, height=20)
         st.session_state.POI['Empty'] = st.empty()
         with st.session_state.POI['Empty']:
             with st.container(border=False, height=475):
@@ -2984,7 +3019,10 @@ def SoundPlayer():
         with st.empty():
             with st.container(border=False, height=1):
                 st.container(border=False, height=20)
-                st.audio(f"sounds/{sound}", format="audio/mp3", autoplay=True)
+                try:
+                    st.audio(f"sounds/{sound}", format="audio/mp3", autoplay=True)
+                except:
+                    pass
             sleepTime = GetWaitTime(sound)
             time.sleep(sleepTime)
             st.empty()
@@ -3018,8 +3056,8 @@ def LoaderHint():
     
     try:
         hintTypes = [
-            "DidYouKnow",
-            "Message",
+            # "DidYouKnow",
+            # "Message",
             "SelfPromo"
         ]
         hintType = random.choice(hintTypes)
@@ -3057,8 +3095,8 @@ def LoaderHint():
         
         if hintType == "SelfPromo":
             Messages = [
-                "@PICOPACHO on X for updates!",
-                "Please give feedback on PICOPACHO to improve the game! (picopacho@gmail.com)",
+                "Follow @blended_jpeg on X for updates!",
+                "Please give feedback on PICOPACHO to improve the game! discord.com/dWWTMdkQcn",
             ]
             ChosenMessage = random.choice(Messages)
             return st.markdown(f"<p style='text-align: center; color: grey; margin-top: -1px; font-size: 14px;'>{ChosenMessage}</p>", unsafe_allow_html=True)
@@ -3353,11 +3391,32 @@ def CheckSub():
 
 
 
-if st.user.is_logged_in:
+if st.user.is_logged_in == True or st.session_state.Guest == True:
     
     #first time run through (before game)
     if "player" not in st.session_state:
         #check if player is already in the database
+
+        if st.session_state.Guest:
+            st.session_state.player = {
+                'ID': 1,
+                'Email': 'guest@picopacho.com',
+                'Name': 'Guest',
+                'Avatar': '🧑',
+                'ProfilePicture': 1,
+                'Eggs': 100,
+                'EggsReset': int((datetime.now(timezone.utc) + timedelta(days=1)).timestamp()),
+                'NativeLanguage': "English",
+                'Gender': "Not Set",
+                'LearningLanguage': "French",
+                'IsSubscribed': False,
+                'Difficulty': "Beginner",
+                'XP': 0,
+                'Money': 2.50,
+                'Volume': 50,
+                'GameTheme': "Set in mordern day France, starting in downtown Paris. Start at a random french shop, move two introduce Baal an alien character, move 3 introduce the men-in black, move 4 the aliens invade paris, move 5 onwards let the player lead the way. Stick to this script"
+            }
+            st.rerun()
         
         #init returning var
         returning = False
@@ -3445,7 +3504,7 @@ if st.user.is_logged_in:
 
     else:
         CheckSub()
-        if st.session_state.player['Eggs'] > 0 or st.session_state.player['IsSubscribed'] == True:
+        if st.session_state.player['Eggs'] > 0 or st.session_state.player['IsSubscribed'] == True or st.session_state.Guest == True:
             Main()
         else:
             OutOfEggs()
@@ -3464,6 +3523,12 @@ else:
         with b:
             if st.button("Sign Up", icon=":material/person_add:", key="SignUpBut", use_container_width=True, type="primary", disabled=st.session_state.isLoading):
                 st.login(provider="google")
+        guestcols = st.columns([1, 2, 1])
+        with guestcols[1]:
+            if st.button("Continue as Guest", icon=":material/person:", key="GuestBut", use_container_width=True, type="secondary", disabled=st.session_state.isLoading, help = "Try out PICOPACHO in a unique French only storyline. World customisation is disabled and play is limited to ~15 moves."):
+                st.session_state.Guest = True
+                st.session_state.isLoading = True
+                st.rerun()
     disc_cols = st.columns([2, 1, 2])
     with disc_cols[1]:
         st.markdown("<p style='text-align: center; color: grey; margin-top: -10px; font-size: 14px;'>By continuing, you agree to our <a href='https://www.picopacho.com/privacy_policy' target='_blank'>Privacy Policy</a> and <a href='https://www.picopacho.com/terms_of_service' target='_blank'>Terms of Service</a>.</p>", unsafe_allow_html=True)
