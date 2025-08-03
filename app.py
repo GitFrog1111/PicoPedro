@@ -3056,8 +3056,8 @@ def LoaderHint():
     
     try:
         hintTypes = [
-            # "DidYouKnow",
-            # "Message",
+            "DidYouKnow",
+            "Message",
             "SelfPromo"
         ]
         hintType = random.choice(hintTypes)
