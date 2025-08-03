@@ -4,8 +4,10 @@ reexport professor pacho fix line on left
 try new loading anim
 tidy up missions display fix weird bumping down- markdown
 change openai api key
-add onboarding polish - anims, more themes, default name
+add onboarding polish - anims
 
+add dice rolling (tool with ai deciding outcome) [dice_roll|5|Baal dies]
+add killing players (instantchar to change pic)
 
 AND THEN LAUNCH!
 publish app on gauth

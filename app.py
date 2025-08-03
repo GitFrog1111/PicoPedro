@@ -840,7 +840,7 @@ async def new_character_async(tool):
         character_voice_name = tool['variables'][3]
         
         # Lookup voice_id
-        character_voice_id = "WAixHs5LYSwPVDJxQgN7"  # default
+        character_voice_id = "KXxZd16DiBqt82nbarJx"  # default
         for voice in st.session_state.AvailableVoices:
             if voice[0].upper() == character_voice_name.upper():
                 character_voice_id = voice[2]
@@ -916,7 +916,7 @@ def message_as_character(tool):
     
 
 def new_character_from_message(name):
-    st.session_state.Conversation.append({"role": "assistant", "content": f"<thinking> Wait, that was invalid tool use, I need to generate a new character for {name}, and call [message_as_character] again</thinking>"})
+    st.session_state.Conversation.append({"role": "assistant", "content": f"<thinking> Wait, that was invalid tool use, I need to generate a new character for {name}, and then call [message_as_character] again.</thinking>"})
     AI(st.session_state.Conversation)
     # r = SpotIntelegence(f'generate a character profile for {name} Output a piece of text exactly like this: name|description|traits, e.g. Lord Garrick|A ruthless count itching for court power|calculating, proud, ill-tempered')
     # r = r.split('|')
@@ -942,7 +942,7 @@ def ChangeMoney(tool):
     }
     #update the money in the database
     #BaserowDB("update row", "Users", st.session_state.player['ID'], Data=data_to_update)
-    if amount > 0:
+    if abs(amount) > 0:
         st.session_state.NotiBuffer.append([f"💸 +{Currencylookup.get(st.session_state.player.get('LearningLanguage', 'English'), '€')}{amount}", "paymentChime.mp3"])
     else:
         st.session_state.NotiBuffer.append([f"💸 -{Currencylookup.get(st.session_state.player.get('LearningLanguage', 'English'), '€')}{abs(amount)}", "paymentChime.mp3"])
@@ -1019,7 +1019,7 @@ def fal_iconimg2img(prompt, image):
         arguments={
         "prompt": prompt,
         "image_url": image,
-        "negative_prompt": "two, 2, multiple, duplicate, spritesheet, seamless, seamless texture, repetition, Text, label, words, title, caption, border, voxel, 3d, dark border, bland, flat color background",
+        "negative_prompt": "two, 2, multiple, duplicate, spritesheet, seamless, seamless texture, repetition, Text, label, words, title, caption, border, voxel, 3d, dark border, bland, flat color background, feet, shoes",
         "loras": [{"path": 'https://civitai.com/api/download/models/160844?type=Model&format=SafeTensor', "scale": 1.0}],
         "num_inference_steps": 12,
         "guidance_scale": 6,
@@ -1027,8 +1027,8 @@ def fal_iconimg2img(prompt, image):
         "enable_safety_checker": True,
         "output_format": "jpeg",
         "image_size": {
-            "height": 1024,
-            "width": 1024
+            "height": 512,
+            "width": 512
         }
         },
         with_logs = True,
@@ -1229,7 +1229,7 @@ async def fal_iconimg2img_async(prompt: str, image_url: str):
             arguments={
                 "prompt": prompt,
                 "image_url": image_url,
-                "negative_prompt": "two, 2, multiple, duplicate, spritesheet, seamless, seamless texture, repetition, Text, label, words, title, caption, border, voxel, 3d, dark border, bland, flat color background",
+                "negative_prompt": "two, 2, multiple, duplicate, spritesheet, seamless, seamless texture, repetition, Text, label, words, title, caption, border, voxel, 3d, dark border, bland, flat color background, feet, shoes",
                 "loras": [{"path": 'https://civitai.com/api/download/models/160844?type=Model&format=SafeTensor', "scale": 1.0}],
                 "num_inference_steps": 12,
                 "guidance_scale": 6,
@@ -1237,8 +1237,8 @@ async def fal_iconimg2img_async(prompt: str, image_url: str):
                 "enable_safety_checker": True,
                 "output_format": "jpeg",
                 "image_size": {
-                    "height": 1024,
-                    "width": 1024
+                    "height": 512,
+                    "width": 512
                 }
             }
         )
@@ -1367,7 +1367,7 @@ def GuestModeChill():
 
 if 'guestcap' not in st.session_state:
     st.session_state.guestcap = 0
-if st.session_state.guestcap <= -25:
+if st.session_state.guestcap <= -32:
     GuestModeChill()
     
 
@@ -3058,6 +3058,8 @@ def LoaderHint():
         hintTypes = [
             "DidYouKnow",
             "Message",
+            "DidYouKnow",
+            "Message",
             "SelfPromo"
         ]
         hintType = random.choice(hintTypes)
@@ -3092,11 +3094,12 @@ def LoaderHint():
 
             ChosenMessage = random.choice(Messages)
             return st.markdown(f"<p style='text-align: center; color: grey; margin-top: -1px; font-size: 14px;'>{ChosenMessage}</p>", unsafe_allow_html=True)
+                
         
         if hintType == "SelfPromo":
             Messages = [
                 "Follow @blended_jpeg on X for updates!",
-                "Please give feedback on PICOPACHO to improve the game! discord.com/dWWTMdkQcn",
+                "Please give feedback on PICOPACHO to help improve the game! Join our <a href='https://discord.gg/dWWTMdkQcn' target='_blank'>discord</a>",
             ]
             ChosenMessage = random.choice(Messages)
             return st.markdown(f"<p style='text-align: center; color: grey; margin-top: -1px; font-size: 14px;'>{ChosenMessage}</p>", unsafe_allow_html=True)
@@ -3525,10 +3528,11 @@ else:
                 st.login(provider="google")
         guestcols = st.columns([1, 2, 1])
         with guestcols[1]:
-            if st.button("Continue as Guest", icon=":material/person:", key="GuestBut", use_container_width=True, type="secondary", disabled=st.session_state.isLoading, help = "Try out PICOPACHO in a unique French only storyline. World customisation is disabled and play is limited to ~15 moves."):
+            if st.button("Continue as Guest", icon=":material/person:", key="GuestBut", use_container_width=True, type="secondary", disabled=st.session_state.isLoading, help = "Try out PICOPACHO with a unique French storyline. In guest mode, play is limited to ~15 moves."):
                 st.session_state.Guest = True
                 st.session_state.isLoading = True
                 st.rerun()
+
     disc_cols = st.columns([2, 1, 2])
     with disc_cols[1]:
         st.markdown("<p style='text-align: center; color: grey; margin-top: -10px; font-size: 14px;'>By continuing, you agree to our <a href='https://www.picopacho.com/privacy_policy' target='_blank'>Privacy Policy</a> and <a href='https://www.picopacho.com/terms_of_service' target='_blank'>Terms of Service</a>.</p>", unsafe_allow_html=True)
