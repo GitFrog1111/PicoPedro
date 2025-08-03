@@ -114,6 +114,7 @@ Example:
 - use this to update the character image. when they change their mood, or are doing something new, call this tool.
 - call this ~ every 3 messages from the character.
 - the prompt should be a very short, one sentence description of what the NPC is doing, and their emotion. e.g.\n making lunch, mad at you, happy to see you, sad while driving car etc.
+- do this only when in conversation with the player
 Example:
 [update_character_image|Lena|is happily talking to you, holding a coffee]
 
@@ -123,15 +124,18 @@ Example:
 Examples:
 [add_mission|Infiltrate the Marquis's gala|Jack's missing fishing rod]
 - only add missions once a character has set one. do not just add missions randomly
+- no markdown, choose a short simple sentence for the mission
 
-[add_mission|gather 5 types of flowers for Marta|45xp]
+[add_mission|Gather 5 types of flowers for Marta|45xp]
 - Missions can have rewards in xp, or items.
--give around 20xp for easy missions, 50xp for medium, 100xp for hard.
+- give around 20xp for easy missions, 50xp for medium, 100xp for hard.
 
 💎 Complete mission (mission success)
-[complete_mission|mission|missionID]
+[complete_mission|mission]
 - only complete missions that already exist in the missions list.
 - each time you respond, answer the question: Has the player completed any missions from missionlist? If yes, call this tool.
+Example:
+[complete_mission|Gather 5 types of flowers for Marta]
 
 🛠️ End of Tools
 ⸻

@@ -324,7 +324,7 @@ def Main():
     #     st.rerun() # Rerun to reflect the new isLoading state and enable UI
 
     SoundPlayer()
-    #debug()
+    debug()
 
 
 async def execute_image_generation_tasks(image_tasks):
@@ -748,32 +748,54 @@ def add_mission(tool):
     #time.sleep(1)
 def complete_mission(tool):
     
-    
-    missionID = int(tool['variables'][1])
+
     missionName = tool['variables'][0]
+    #try softmatch the name
+    from thefuzz import fuzz
+    highest = 0
+    for mission in st.session_state.missionList:
+        Ratio = fuzz.ratio(mission['mission'].lower(), missionName.lower())
+        if Ratio > highest:
+            highest = Ratio
+            missionID = st.session_state.missionList.index(mission)
+            missionName = mission['mission']
+            print('missionID: ', missionID)
+
+    if highest < 80:
+        print(f"Could not find mission: {missionName}")
+        return
+        
+    
+    
+    
     if st.session_state.missionList[missionID]['Active?'] == True:
         reward = st.session_state.missionList[missionID]['Reward']
         st.session_state.NotiBuffer.append([f"💠 Mission complete: {missionName}, reward: {reward}", "NewMission2.mp3"])
         #st.toast(f"💠 Mission complete: {missionName}, reward: {reward}")
         
         if "xp" in reward.lower():
+            print('reward: ', reward)
             try:
                 xp_value = re.search(r'\d+', reward)
+                print('xp_value: ', xp_value)
                 if xp_value:
-                    xp = int(xp_value.group(0))
+                    print('xp_value.group(0): ', xp_value.group(0))
+                    xp = int(str(xp_value.group(0)).strip())
+                    print('xp: ', xp)
                     AddXP(xp)
                     
 
                     #st.toast(f"💎 You gained {xp} XP")
             except (ValueError, IndexError):
-                st.error(f"Could not parse XP from reward: {reward}")
+                print(f"Could not parse XP from reward: {reward}")
+                
         else:
-            h = 7
-            #GenerateItemFromMission(st.session_state.missionList[missionID])
+            GenerateItemFromMission(st.session_state.missionList[missionID])
         st.session_state.missionList[missionID]['Active?'] = False
         
         #time.sleep(1)
-
+def GenerateItemFromMission(mission):
+    AI(st.session_state.Conversation.append({"role": "assistant", "content": f"<thinking> The player has completed {mission}. I need to give them the item for the reward, I will respond with one tool call of [add_item_to_inventory]</thinking>"}))
 
 ### ASYNC TOOL FUNCTIONS ###
 async def new_poi_async(tool):
@@ -2538,20 +2560,25 @@ def Mission_box():
         with xpbarcols[1]:
             st.markdown(f"<p style='text-align: right; color: grey; margin-top: -84px; font-size: 14px;'>Level {lvl+1}</p>", unsafe_allow_html=True)
 
-        missionbuttoncols = st.columns(6)
+        missionbuttoncols = st.columns(8)
 
-        with missionbuttoncols[4]:
+        with missionbuttoncols[6]:
             Turninmissions = st.button("", icon = ':material/cached:', key="Turninmissions", use_container_width=True, type="tertiary", disabled=st.session_state.isLoading, help = 'Turn in missions')
             if Turninmissions:
                 #format the conversation into a string
-                if not st.session_state.Conversation[-3]['content'].startswith("[MissionRefresh]"):
-                    st.session_state.Conversation.append({"role": "assistant", "content": "[MissionRefresh]\nThe player has clicked the refresh missions button, indicating they believe they have completed one or more missions. After this usercontext I should call the complete mission tool on completed tasks"})
-                    AI(st.session_state.Conversation)
-                else:
-                    st.toast("No more missions complete")
+
+                st.session_state.Conversation.append({"role": "assistant", "content": "[MissionRefresh]\nThe player has clicked the refresh missions button, indicating they believe they have completed one or more missions. After this usercontext I will call the complete mission tool on completed tasks"})
+                AI(st.session_state.Conversation)
+
+
+                # if not st.session_state.Conversation[-3]['content'].startswith("[MissionRefresh]"):
+                #     st.session_state.Conversation.append({"role": "assistant", "content": "[MissionRefresh]\nThe player has clicked the refresh missions button, indicating they believe they have completed one or more missions. After this usercontext I will call the complete mission tool on completed tasks"})
+                #     AI(st.session_state.Conversation)
+                # else:
+                #     st.toast("No more missions complete")
         # Use the main column for the Mission entry input
         # Display existing entries with yellow background
-        with missionbuttoncols[5]:
+        with missionbuttoncols[7]:
             #clear nun active missions from the display:
             if st.button("", icon = ':material/delete_forever:', key="ClearMissions", use_container_width=True, type="tertiary", disabled=st.session_state.isLoading, help = 'Clear completed'):
                 for mission in st.session_state.missionList:
@@ -2560,33 +2587,56 @@ def Mission_box():
 
 
         # convert to streamlit native, mission icon = :material/api:, hov, nearby
-        
-        if st.session_state.missionList:
-            ids = -1
-            for mission in st.session_state.missionList:
-                ids += 1
-                missionchipcols = st.columns([10, 1])
-                if mission['Display?']:
-                    if mission['Active?']:
+        missionsEmpty = st.empty()
+        with missionsEmpty:
+            with st.container():
+                if st.session_state.missionList:
+                    ids = -1
+                    #copy and reverse
+                    missionList = st.session_state.missionList.copy()
+                    missionList.reverse()
+                    for mission in missionList:
+                        ids += 1
                         
-                        with missionchipcols[0]:
-                            st.markdown(f'<div style="background-color: #fffaef; padding: 10px; border-radius: 5px; margin-bottom: 10px;">💠 {mission["mission"]}</div>', unsafe_allow_html=True)
-                        
-                        with missionchipcols[1]:
-                            clear_mission = st.button("", icon = ':material/close:', key=f"ClearMission{mission['mission']}", use_container_width=True, type="tertiary", disabled=st.session_state.isLoading, help = 'Delete mission')
-                            if clear_mission:
-                                st.session_state.missionList[ids]['Active?'] = False
-                                st.session_state.missionList[ids]['Display?'] = False
-                                st.rerun()
+                        if mission['Display?']:
+                            if mission['Active?']:
+                                cssstyles = """
+                                    div[data-testid="stMarkdownContainer"] {
+                                        background-color: #F5F5F8;
+                                        padding: 1px;
+                                        border-radius: 5px;
+                                    }
+                                """
+                                with stylable_container(css_styles=cssstyles, key=f"MissionChip{mission['mission']}"):
+                                    st.markdown(f"<p style='text-align: left; color: grey; margin-top: 14px; font-size: 15px; padding-left: 20px; color: #25274B;'>{mission["mission"]}</p>", unsafe_allow_html=True)
+                                    st.markdown(f"<p style='text-align: left; color: grey; margin-top: 0px; font-size: 13px;padding-left: 20px;'>{mission["Reward"]}</p>", unsafe_allow_html=True)
                                 
-                    else:
-                        with missionchipcols[0]:
-                            st.markdown(f'<div style="background-color: #fffffa; padding: 10px; border-radius: 5px; margin-bottom: 10px; color: grey; text-decoration: line-through;">✔ {mission["mission"]}</div>', unsafe_allow_html=True)
-                        with missionchipcols[1]:
-                            clear_mission = st.button("", icon = ':material/close:', key=f"ClearMission{mission['mission']}", use_container_width=True, type="tertiary", disabled=st.session_state.isLoading, help = 'Clear mission')
-                            if clear_mission:
-                                st.session_state.missionList[ids]['Display?'] = False
-                                st.rerun()
+                                
+                                        # del_mission = st.button("", icon = ':material/close:', key=f"ClearMission{mission['mission']}", use_container_width=True, type="tertiary", disabled=st.session_state.isLoading, help = 'Delete mission')
+                                        # if del_mission:
+                                        #     st.session_state.missionList[ids]['Active?'] = False
+                                        #     st.session_state.missionList[ids]['Display?'] = False
+                                        #     st.rerun()
+                                        
+                            else:
+                                cssstyles = """
+                                    div[data-testid="stMarkdownContainer"] {
+                                        background-color: #F5F5F8;
+                                        padding: 8px;
+                                        border-radius: 5px;
+                                    }
+                                """
+                                with stylable_container(css_styles=cssstyles, key=f"MissionChip{mission['mission']}"):
+                                
+                                        st.markdown(f'<p style="padding: 8px; border-radius: 5px; margin-bottom: 10px; color: grey; padding-left: 18px; font-size: 15px; text-decoration: line-through;">{mission["mission"]}</p>', unsafe_allow_html=True)
+                                        st.markdown(f"<p style='text-align: left; color: grey; margin-top: -20px; padding-left: 18px; font-size: 13px; text-decoration: line-through;'>{mission["Reward"]}</p>", unsafe_allow_html=True)
+                                # with missionchipcols[1]:
+                                #     clear_mission = st.button("", icon = ':material/close:', key=f"ClearMission{mission['mission']}", use_container_width=True, type="tertiary", disabled=st.session_state.isLoading, help = 'Clear mission')
+                                #     if clear_mission:
+                                #         st.session_state.missionList[ids]['Display?'] = False
+                                #         st.rerun()
+                        st.container(border=False, height=1)
+
 
         # # Notes
         # if st.session_state.Notes:
@@ -2852,11 +2902,11 @@ def renderMainUI():
         st.container(border=False, height=20)
         st.session_state.POI['Empty'] = st.empty()
         with st.session_state.POI['Empty']:
-            with st.container(border=False, height=475):
+            with st.container(border=False, height=445):
                 if st.session_state.isLoading == True:
                     padleft, centerGif, padright = st.columns([50, 10, 50])
                     with centerGif:
-                        st.container(border=False, height=182)
+                        st.container(border=False, height=142)
                         file_ = open("Loading.gif", "rb")
                         contents = file_.read()
                         data_url = base64.b64encode(contents).decode("utf-8")
@@ -3009,8 +3059,6 @@ def GetWaitTime(sound):
         print(f"Error reading sound length: {e}")
         # Fallback to a default wait time if file can't be read
         return 2.0
-    
-    
 
 
 def SoundPlayer():
@@ -3036,21 +3084,6 @@ def SoundEngine(sound):
     st.session_state.SoundBuffer.append(sound)
     #SoundPlayer()
 
-#     components.html(f"""
-# <script>
-#     try {{
-#         const audio = document.createElement('audio');
-#         audio.src = "{BaseUrl}sounds/{sound}";
-#         audio.autoplay = true;
-#         audio.onended = () => {{
-#             audio.remove();
-#         }};
-#         document.body.appendChild(audio);
-#     }} catch (err) {{
-#         console.error("Playback error:", err);
-#     }}
-# </script>
-# """, height=1)
 
 def LoaderHint():
     
@@ -3417,7 +3450,7 @@ if st.user.is_logged_in == True or st.session_state.Guest == True:
                 'XP': 0,
                 'Money': 2.50,
                 'Volume': 50,
-                'GameTheme': "Set in mordern day France, starting in downtown Paris. Start at a random french shop, move two introduce Baal an alien character, move 3 introduce the men-in black, move 4 the aliens invade paris, move 5 onwards let the player lead the way. Stick to this script"
+                'GameTheme': "Set in mordern day France, starting in downtown Paris. Start at a random french shop where all is well, second location - introduce Baal an alien character, move 3 introduce the 'men-in black' to remove Baal, move 4 the aliens invade paris, shooting lazers and abduction people. move 5 onwards let the player lead the way. YOU MUST STICK TO THIS SCRIPT"
             }
             st.rerun()
         
