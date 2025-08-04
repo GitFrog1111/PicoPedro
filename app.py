@@ -3195,9 +3195,9 @@ def Onboarding(id = None):
 
                 langcols = st.columns(2)
                 with langcols[0]:
-                    Nativelang = st.selectbox("I normally speak", options=["English", "French", "German", "Italian"], index=0)
+                    Nativelang = st.selectbox("I normally speak", options=["English", "French", "German", "Italian", "Russian"], index=0)
                 with langcols[1]:
-                    Learninglang = st.selectbox("I want to learn", options=["English", "French", "German", "Italian"], index=1)
+                    Learninglang = st.selectbox("I want to learn", options=["English", "French", "German", "Italian", "Russian"], index=1)
 
                 Difficulty = st.select_slider("Difficulty", options=st.session_state.DifficultyOptions, value='Beginner')
             
@@ -3571,7 +3571,7 @@ else:
         st.markdown("<p style='text-align: center; color: grey; margin-top: -10px; font-size: 14px;'>By continuing, you agree to our <a href='https://www.picopacho.com/privacy_policy' target='_blank'>Privacy Policy</a> and <a href='https://www.picopacho.com/terms_of_service' target='_blank'>Terms of Service</a>.</p>", unsafe_allow_html=True)
 
 if "SupportedLanguages" not in st.session_state:
-    st.session_state.SupportedLanguages = ["English", "French", "German", "Italian"]
+    st.session_state.SupportedLanguages = ["English", "French", "German", "Italian", "Russian"]
 
 if 'DifficultyOptions' not in st.session_state:
     st.session_state.DifficultyOptions = ["Completely New", "I know some basics", "Beginner", "Conversational", "Intermediate", "Advanced", "Fluent"]

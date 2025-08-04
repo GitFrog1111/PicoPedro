@@ -22,6 +22,13 @@
         "3": ["Antonio", "Middle aged man soft and charming", "uScy1bXtKz8vPzfdFsFw"],
         "4": ["Archer", "young, charming male voice with standard accent", "Fahco4VZzobUeiPqni1S"]
     },
+    "Russian": {
+        "0": ["Prince", "Male, confident young voice, smooth", "gJEfHTTiifXEDmO687lC"],
+        "1": ["Ekaterina", "Female, soft, velvety and fun", "https://elevenlabs.io/app/voice-library?voiceId=GN4wbsbejSnGSa1AzjH5"],
+        "2": ["Kate", "Female, young, standoffish", "WfExDXCt2GBg6MI5KjQk"],
+        "3": ["Dmitry", "Cheerful, young, male, happy", "kwajW3Xh5svCeKU5ky2S"],
+        "4": ["Andrey", "Male, expressive and charismatic with standard accent", "lsAmGFzUYusakA482527"]
+    },
     "English": {
         "0": ["Martin", "deep, warm, and professional male voice", "s1TxC2vO0GyTuonQQhm4"],
         "1": ["Tommy Pro", "calm North English voice without dialect, male", "iNmg5TuXskrU3jUtYXW5"],
