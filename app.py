@@ -335,7 +335,7 @@ def Main():
     #     st.rerun() # Rerun to reflect the new isLoading state and enable UI
 
     SoundPlayer()
-    debug()
+    #debug()
 
 
 async def execute_image_generation_tasks(image_tasks):
