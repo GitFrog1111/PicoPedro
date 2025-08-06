@@ -1,0 +1,18 @@
+vid vo
+website change farm image on click
+
+Hey all shameless plug, but if you like language learning and DnD i made this pixelart rpg called picopacho and am looking for beta testers anyone interested?
+
+Hey all im looking for beta testers for my pixelart ai DnD game - anyone interested?
+
+
+https://www.reddit.com/r/languagelearning/wiki/discord/
+
+<thinking> Start game: create a lively modern German plaza at (50,50). Add three engaging characters with distinct personalities and clear beginner-level German. One character (Lara) immediately asks the player for help, setting up the first simple mission. Use 7 tool calls: new_poi, 3×generate_character, message_as_character (Lara greet/help), add_mission, and perhaps a welcoming remark from Markus (second message_as_character) to reach 7. </thinking> 
+
+[new_poi|Kaffeeplatz Mitte|Weitläufiger gepflasterter Platz mit modernen Straßenbahn­schienen, kleiner Springbrunnen spritzt Wasser, Straßen­café mit roten Sonnenschirmen, runde Metalltische und Stühle, buntes Graffiti an einer Backsteinwand, offener Gitarrenkoffer mit ein paar Münzen, digitale Anzeigetafel für Tramzeiten, Passanten mit Einkaufstüten, gelbe Straßenbahn hält gerade, Abendsonne wirft lange Schatten|50,50]
+
+[generate_character|Markus|Male, 30 Jahre, Barista im Straßencafé „Kaffee Ecke“, Image background: hinter Kaffeetheke, lehnt sich vor, poliert eine Tasse, schaut neugierig zum Spieler|ESFJ, freundlich, redselig, Kaffee-Nerd, hilft gern Sprachlernenden|derek]
+[generate_character|Lara|Female, 22 Jahre, Uni-Studentin auf Durchreise, Rucksack über einer Schulter, hält Ausdruck vom Fahrkarten­automaten, Blick leicht besorgt|INFP, schüchtern, neugierig, liebt Reisen, braucht Hilfe beim Ticket|erin]
+[generate_character|Ben|Male, 28 Jahre, Straßenmusiker, sitzt auf Hocker, spielt Akustikgitarre, Gitarrenkoffer vor sich mit Münzen|ENFP, energiegeladen, improvisiert Lieder, sammelt Geschichten von Fremden|antonio] [message_as_character|Lara|Hallo… Hilfe bitte… Ticket?|Hallo… Hil-fe bit-te… Tik-et?|Hi… help please… ticket?] [add_mission|Hilf Lara ein Zugticket zu kaufen|20xp]
+[message_as_character|Markus|Willkommen! Kaffee?|Vil-kom-men! Kah-fee?|Welcome! Coffee?]

@@ -137,6 +137,14 @@ Examples:
 Example:
 [complete_mission|Gather 5 types of flowers for Marta]
 
+💀 Kill Character
+[kill_character|name|Message]
+- use this to kill a character.
+- The message will be displayed to the player, it can be a reason, a SHORT snippet of story or something else. Something short yet impactful and memorable.
+Examples:
+[kill_character|Lena|Lena was a good friend...]
+[kill_character|Lena|Lena was cut down by your axe]
+[kill_character|Lena|Then Lena wandered into the forest, never to be seen again.]
 🛠️ End of Tools
 ⸻
 

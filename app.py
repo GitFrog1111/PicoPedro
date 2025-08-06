@@ -122,6 +122,12 @@ def debug():
         if st.button("Fal upload"):
             url = fal_client.upload_file('Fallback.png')
             st.write(url)
+        if st.button("Kill Character"):
+            #get random character
+            random_character = random.choice(st.session_state.characters)
+            KillCharacter({"name": "KILL_CHARACTER", "variables": [random_character['name'], f'{random_character['name']} has been killed']})
+        if st.button("Clear Tutor History"):
+            st.session_state.TutorHistory = []
 
         with st.container():
             chosenstates = ["Conversation", "toolbuffer", "player", "PoiList", "inventory", "characters", "missionList", "ShowVocab", 'close']
@@ -317,6 +323,11 @@ def Main():
         Toolbuffer()
     else:
         NotiBuffer()
+
+
+
+    if st.session_state.isLoading == False and len(st.session_state.toolbuffer) == 0:
+        ModalTools()
     
     # After initial loading and AI calls are done:
     # if st.session_state.isLoading: # If true (typically after initial setup and AI calls)
@@ -349,6 +360,16 @@ async def execute_image_generation_tasks(image_tasks):
     except Exception as e:
         print(f"Error in concurrent image generation: {e}")
         return [None] * len(image_tasks)
+
+def ModalTools():
+    if 'ModalToolBuffer' not in st.session_state:
+        st.session_state.ModalToolBuffer = []
+
+    if len(st.session_state.ModalToolBuffer) > 0:
+        tool = st.session_state.ModalToolBuffer.pop(0)
+        if tool['name'].upper() == 'KILL_CHARACTER':
+            KillCharacter(tool)
+
 
 def Toolbuffer():
     print(f'{time.time()} running toolbuffer: \n', st.session_state.toolbuffer)
@@ -412,6 +433,17 @@ def Toolbuffer():
                         if img_task['tool'] in st.session_state.toolbuffer:
                             st.session_state.toolbuffer.remove(img_task['tool'])
         
+
+        # Split off modal tools that need to be executed without rerun
+        if 'ModalToolBuffer' not in st.session_state:
+            st.session_state.ModalToolBuffer = []
+
+        for tool in other_tools:
+            if tool['name'].upper() == 'KILL_CHARACTER':
+                st.session_state.ModalToolBuffer.append(tool)
+                st.session_state.toolbuffer.remove(tool)
+
+        
         # Execute remaining non-image tools sequentially
         for tool in other_tools:
             try:
@@ -436,6 +468,7 @@ def Toolbuffer():
             st.rerun()
         else:
             st.session_state.isLoading = False
+            #ModalTools()
             st.rerun()
     else:
         st.session_state.isLoading = False
@@ -506,11 +539,12 @@ def dispatch_tool(tool):
         elif tool['name'].upper() == 'CHANGE_MONEY':
             ChangeMoney(tool)
         elif tool['name'].upper() == 'LEVELUP':
-            pass
             #Levelup()
+            pass
         elif tool['name'].upper() == 'MESSAGE_AS_CHARACTER':
             character_chat(tool['variables'][0])
             pass
+
     except Exception as e:
         print(f"Error in dispatch_tool: {e}\ntool: {tool}")
 
@@ -534,6 +568,8 @@ def handle_tools(tools):
                         message_to_append['translation'] = tool['variables'][3]
                     character['convoHistory'].append(message_to_append)
                     character_to_chat = character
+        
+        
         else:
             st.session_state.toolbuffer.append(tool)
         
@@ -750,23 +786,7 @@ def complete_mission(tool):
     
 
     missionName = tool['variables'][0]
-    #try softmatch the name
-    from thefuzz import fuzz
-    highest = 0
-    for mission in st.session_state.missionList:
-        Ratio = fuzz.ratio(mission['mission'].lower(), missionName.lower())
-        if Ratio > highest:
-            highest = Ratio
-            missionID = st.session_state.missionList.index(mission)
-            missionName = mission['mission']
-            print('missionID: ', missionID)
-
-    if highest < 80:
-        print(f"Could not find mission: {missionName}")
-        return
-        
-    
-    
+    missionID = st.session_state.missionList.index(missionName)    
     
     if st.session_state.missionList[missionID]['Active?'] == True:
         reward = st.session_state.missionList[missionID]['Reward']
@@ -807,11 +827,17 @@ async def new_poi_async(tool):
         
         # Set the new POI as current location immediately
         st.session_state.POI["Name"] = poi_name
+
+        #coodinate come in like this: 10,10
+        #convert to int
+        try:
+            x = int(poi_coordinates.split(',')[0])
+            y = int(poi_coordinates.split(',')[1])
+        except:
+            x = random.randint(0, 100)
+            y = random.randint(0, 100)
+            poi_coordinates = f"{x},{y}"
         
-        # Generate random coordinates
-        x = random.randint(0, 100)
-        y = random.randint(0, 100)
-        poi_coordinates = f"{x},{y}"
         
         # Generate POI prompt for image generation
         full_prompt = f"{poi_name}, {st.session_state.player['LearningLanguage']} isometric point of interest, detailed map tile, pastel colour pallette, soft beautiful pixel art, rpg pixel art game, moody, cinematic, gritty, {poi_prompt}, 2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel. detailed and varied, asymmetrical."
@@ -952,6 +978,8 @@ def new_character_from_message(name):
 
 def ChangeMoney(tool):
     amount = float(tool['variables'][0])
+    if amount == 0:
+        return
     print('amount: ', amount)
     if st.session_state.player['Money'] + amount < 0:
         st.session_state.Conversation.append({"role": "assistant", "content": f"<thinking> Oops, looks like the player doesn't have enough money to do that\nTool aborted\nmoney: {st.session_state.player['Money']}</thinking>"})
@@ -1523,6 +1551,62 @@ def AddXP(amount):
     if oldxp//100 != newxp//100:
         st.session_state.toolbuffer.append({"name": "LEVELUP", "variables": []})
 
+def lerp(a, b, t):
+    return (1 - t) * a + t * b
+
+def Animate(Key1, Key2, Duration, Curve = 'linear'):
+    starttime = datetime.now()
+    endtime = starttime + timedelta(seconds=Duration)
+    t = Key1
+    finished = False
+
+    currenttime = datetime.now()
+    t = lerp(Key1, Key2, (endtime-currenttime).total_seconds()/Duration)
+    if t >= Key2:
+        finished = True
+    
+    return t, finished
+
+@st.dialog(" ")
+def KillCharacter(tool):
+    # search characters list and remove the character
+    c = None
+    for character in st.session_state.characters:
+        if character['name'].lower() == tool['variables'][0].lower():
+            c = character
+    
+    st.title(f"💀 {tool['variables'][0]} has died")
+    st.container(border=False, height = 10)
+    cols = st.columns([1, 1, 1])
+    with cols[1]:
+        st.image(c['image'])
+    
+    cols = st.columns([1, 2, 1])
+    with cols[1]:
+        
+        with open("CharacterDeathX.gif", "rb") as file_:
+            contents = file_.read()
+            data_url = base64.b64encode(contents).decode("utf-8")
+
+        st.markdown(
+            f'''
+            <img src="data:image/gif;base64,{data_url}" 
+                alt="Character death {c['name']}" 
+                width="100%" 
+                style="margin-top: -200px;">
+            ''',
+            unsafe_allow_html=True
+        )
+
+    cols = st.columns([1, 5, 1])
+    with cols[1]:
+
+        st.markdown(f"<p style='text-align: center; color: grey; margin-top: -10px; font-size: 14px;'>{tool['variables'][1]}</p>", unsafe_allow_html=True)
+        st.container(border=False, height = 20)
+        if st.button("Continue", key = f"KillCharacterContinue", use_container_width=True, type="primary", disabled=st.session_state.isLoading):
+            st.rerun()
+        st.container(border=False, height = 5)
+
 def AI(conversation):
     AddUserContext()
     response = get_response(conversation)       
@@ -1551,7 +1635,6 @@ def get_response(conversation):
     else:
         return "Error: " + response.choices[0].message.content
 
-    return response.choices[0].message.content
 
 
 if 'lasttext' not in st.session_state:
@@ -1564,7 +1647,7 @@ def Fakestream(text):
         st.session_state.lasttext = text
         for char in text:
             rand = random.randint(1, 5)
-            time.sleep(rand/50)
+            time.sleep(rand/500)
             yield char
         
 def speechtotext(recording, Character):
@@ -1870,6 +1953,10 @@ def Tutor_chat():
     # Initialize session state variables
     if "vocabTables" not in st.session_state:
         st.session_state.vocabTables = []
+    if "TutorHistory" not in st.session_state:
+        st.session_state.TutorHistory = []
+    st.session_state.ModalOpen = True
+
 
     def detect_markdown_tables(text):
         """Detect and extract markdown tables from text"""
@@ -1913,168 +2000,173 @@ def Tutor_chat():
         except Exception as e:
             print(f"Error creating DataFrame: {e}")
             return None
+    
+    def FormatToolCalls(response):
+        #remove all text between [ and ]
+        findall = re.findall(r'\[.*?\]', response)
+        if findall:
+            for i in findall:
+                print('findall:', findall)
+                #remove last ]
+                xp = i.split("|", 2)[2]
+                xp = xp[:-1]
+                response = response.replace(i, f'💠{i.split("|")[1]}\n-{xp}\n')
+        return response
+    
+    def renderTutorChat():
+        
+        imagecols = st.columns([2, 1, 2])
+        with imagecols[1]:
+            st.image(f"static/tutorgif.gif", use_container_width=True)
+        st.markdown("<p style='text-align: center; color: grey; margin-top: -12px;'>Professor Pacho</p>", unsafe_allow_html=True)
+        
+        chat_container = st.container(border=True, height=300)
+
+        for i, message in enumerate(st.session_state.TutorHistory):
+            if message["role"] == "system":
+                continue
+            avatar = st.session_state.player['Avatar'] if message["role"] == "user" else "✨"
+            name = "you" if message["role"] == "user" else "assistant"
+            
+            # Check if this message contains tables (only for assistant messages)
+            has_tables = False
+            if message["role"] == "assistant":
+                tables = detect_markdown_tables(message["content"])
+                has_tables = len(tables) > 0
+            
+            with chat_container:
+                # Create columns for message and pin button
+                if has_tables:
+                    msg_col, pin_col = st.columns([10, 1])
+                else:
+                    msg_col = st.container()
+                    pin_col = None
+                
+                with msg_col:
+                    with st.chat_message(name, avatar=avatar):
+                        if message["role"] == "user":
+                            st.markdown(f"<p style='text-align: left; background-color: #F0F2F6; padding: 10px; border-radius: 10px;'>{message['content']}</p>", unsafe_allow_html=True)
+                        else:
+                            st.markdown(f"<p style='text-align: left; padding: 10px; border-radius: 10px;'>{FormatToolCalls(message['content'])}</p>", unsafe_allow_html=True)
+                
+                # Add pin button for messages with tables
+                if has_tables and pin_col:
+                    with pin_col:
+                        st.container(border=False, height=10)
+                        if st.button("📌", key=f"pin_{i}", help="Pin to view", type="tertiary"):
+                            # Convert all tables in this message to DataFrames
+                            message_tables = []
+                            for table in tables:
+                                df = markdown_table_to_dataframe(table)
+                                if df is not None:
+                                    message_tables.append(df)
+                            
+                            # Set pinnedVocab to the message content and tables
+                            st.session_state.pinnedVocab = {
+                                "content": message["content"],
+                                "tables": message_tables,
+                                "timestamp": i
+                            }
+                            st.session_state.ShowVocab = True
+                            
+                            st.rerun()
+
+        def Run(prompt):
+            st.session_state.TutorHistory.append({"role": "user", "content": prompt})
+            with chat_container:
+                with st.chat_message("you", avatar=st.session_state.player['Avatar']):
+                    st.markdown(prompt)
+
+            client = OpenAI(api_key=openai_api_key)
+            with chat_container:
+                with st.chat_message("assistant", avatar="✨"):
+                    response = client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=[
+                            {"role": m["role"], "content": m["content"]}
+                            for m in st.session_state.TutorHistory
+                        ]
+                    )
+                    response = response.choices[0].message.content
+                    with st.empty():
+                        st.write_stream(Fakestream(FormatToolCalls(response)))
+                        st.markdown(f"<p style='text-align: left; padding: 10px; border-radius: 10px;'>{FormatToolCalls(response)}</p>", unsafe_allow_html=True)
+                    
+                    
+                    #ChangeEggs(-1)
+                    tools = check_for_tools(response)
+                    if tools:
+                        handle_tools(tools)
+                    #st.session_state.isLoading = False
+                    
+
+            st.session_state.TutorHistory.append({"role": "assistant", "content": response})
+            # Scan response for tables and add to vocabTables
+            tables = detect_markdown_tables(response)
+            if tables:
+                for table in tables:
+                    df = markdown_table_to_dataframe(table)
+                    if df is not None:
+                        # Add to vocabTables with metadata
+                        table_entry = {
+                            "dataframe": df,
+                            "raw_table": table,
+                            "message_index": len(st.session_state.TutorHistory),
+                            "timestamp": len(st.session_state.TutorHistory)
+                        }
+                        st.session_state.vocabTables.append(table_entry)
+            
+            
+
+        quickresponsesA = st.columns(3)
+        with quickresponsesA[0]:
+            prompt = "Yes"
+            if st.button(prompt, key = "QR0", use_container_width=True, type="secondary"):
+                Run(prompt)
+        with quickresponsesA[1]:
+            prompt = "No"
+            if st.button(prompt, key = "QR1", use_container_width=True, type="secondary"):
+                Run(prompt)
+        with quickresponsesA[2]:
+            prompt = "More!"
+            if st.button(prompt, key = "QR2", use_container_width=True, type="secondary"):
+                Run(prompt)
+        quickresponsesB = st.columns(2)
+        with quickresponsesB[0]:
+            prompt = "Teach me something new"
+            if st.button(prompt, key = "QR3", use_container_width=True, type="secondary"):
+                Run(prompt)
+        with quickresponsesB[1]:
+            prompt = "Create a new mission"
+            if st.button(f"💠 {prompt}", key = "QR4", use_container_width=True, type="secondary"):
+                Run(prompt)
+
+        
+        Prompt = st.chat_input("Ask Professor Pacho anything!")
+        if Prompt:
+            Run(Prompt)
+    
+
+
     def get_system_prompt():
         with open("TutorSystemPrompt.txt", "r", encoding="utf-8") as file:
             system_prompt = file.read()
         system_prompt = system_prompt.format(PlayerName=st.session_state.player['Name'], PlayerGender=st.session_state.player['Gender'], PlayerNativeLanguage=st.session_state.player['NativeLanguage'], LearningLanguage=st.session_state.player['LearningLanguage'], PlayerLevel=st.session_state.player['Difficulty'])
-        system_prompt = system_prompt + "\n\n" + str(st.session_state.Conversation)
+        system_prompt = system_prompt + "\n" + str(st.session_state.Conversation)
+
         
-        if "TutorHistory" not in st.session_state:
-            st.session_state.TutorHistory = []
-        st.session_state.TutorHistory.append({"role": "system", "content": system_prompt})
-        return system_prompt
+        copytutorhistory = st.session_state.TutorHistory.copy()        
+        if len(copytutorhistory) > 1:
+            del copytutorhistory[0]
+            del copytutorhistory[0]
+
+        st.session_state.TutorHistory = [{"role": "system", "content": system_prompt}, {"role": "assistant", "content": "What should we learn today?"}]
+        
+        st.session_state.TutorHistory.extend(copytutorhistory)
     get_system_prompt()
-    
-    def AppendStarting():
-        #st.session_state.TutorHistory = []
-        st.session_state.TutorHistory = [{"role": "assistant", "content": "What should we learn today?"}]
-        
-    if "TutorHistory" not in st.session_state:
-        AppendStarting()
-    
-    if len(st.session_state.TutorHistory) == 1:
-        AppendStarting()
-        
-    imagecols = st.columns([2, 1, 2])
-    with imagecols[1]:
-        st.image(f"static/tutorgif.gif", use_container_width=True)
-    st.markdown("<p style='text-align: center; color: grey; margin-top: -12px;'>Professor Pacho</p>", unsafe_allow_html=True)
-    
-    chat_container = st.container(border=True, height=300)
+    renderTutorChat()     
 
-    for i, message in enumerate(st.session_state.TutorHistory):
-        if message["role"] == "system":
-            continue
-        avatar = st.session_state.player['Avatar'] if message["role"] == "user" else "✨"
-        name = "you" if message["role"] == "user" else "assistant"
-        
-        # Check if this message contains tables (only for assistant messages)
-        has_tables = False
-        if message["role"] == "assistant":
-            tables = detect_markdown_tables(message["content"])
-            has_tables = len(tables) > 0
-        
-        with chat_container:
-            # Create columns for message and pin button
-            if has_tables:
-                msg_col, pin_col = st.columns([10, 1])
-            else:
-                msg_col = st.container()
-                pin_col = None
-            
-            with msg_col:
-                with st.chat_message(name, avatar=avatar):
-                    if message["role"] == "user":
-                        st.markdown(f"<p style='text-align: left; background-color: #F0F2F6; padding: 10px; border-radius: 10px;'>{message['content']}</p>", unsafe_allow_html=True)
-                    else:
-                        st.markdown(f"<p style='text-align: left; padding: 10px; border-radius: 10px;'>{message['content']}</p>", unsafe_allow_html=True)
-            
-            # Add pin button for messages with tables
-            if has_tables and pin_col:
-                with pin_col:
-                    st.container(border=False, height=10)
-                    if st.button("📌", key=f"pin_{i}", help="Pin to view", type="tertiary", disabled=st.session_state.isLoading):
-                        # Convert all tables in this message to DataFrames
-                        message_tables = []
-                        for table in tables:
-                            df = markdown_table_to_dataframe(table)
-                            if df is not None:
-                                message_tables.append(df)
-                        
-                        # Set pinnedVocab to the message content and tables
-                        st.session_state.pinnedVocab = {
-                            "content": message["content"],
-                            "tables": message_tables,
-                            "timestamp": i
-                        }
-                        st.session_state.ShowVocab = True
-                        
-                        st.rerun()
 
-    def Run(prompt):
-        
-        get_system_prompt()
-        st.session_state.TutorHistory.append({"role": "user", "content": prompt})
-        with chat_container:
-            with st.chat_message("you", avatar=st.session_state.player['Avatar']):
-                st.markdown(prompt)
-
-        client = OpenAI(api_key=openai_api_key)
-        with chat_container:
-            with st.chat_message("assistant", avatar="✨"):
-                stream = client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=[
-                        {"role": m["role"], "content": m["content"]}
-                        for m in st.session_state.TutorHistory
-                    ],
-                    stream=True,
-                )
-                response = st.write_stream(stream)
-                #ChangeEggs(-1)
-                tools = check_for_tools(response)
-                if tools:
-                    handle_tools(tools)
-        
-        # Scan response for tables and add to vocabTables
-        tables = detect_markdown_tables(response)
-        if tables:
-            for table in tables:
-                df = markdown_table_to_dataframe(table)
-                if df is not None:
-                    # Add to vocabTables with metadata
-                    table_entry = {
-                        "dataframe": df,
-                        "raw_table": table,
-                        "message_index": len(st.session_state.TutorHistory),
-                        "timestamp": len(st.session_state.TutorHistory)
-                    }
-                    st.session_state.vocabTables.append(table_entry)
-        
-        st.session_state.TutorHistory.append({"role": "assistant", "content": response})
-
-    quickresponsesA = st.columns(3)
-    with quickresponsesA[0]:
-        prompt = "Yes"
-        if st.button(prompt, key = "QR0", use_container_width=True, type="secondary", disabled=st.session_state.isLoading):
-            Run(prompt)
-    with quickresponsesA[1]:
-        prompt = "No"
-        if st.button(prompt, key = "QR1", use_container_width=True, type="secondary", disabled=st.session_state.isLoading):
-            Run(prompt)
-    with quickresponsesA[2]:
-        prompt = "More!"
-        if st.button(prompt, key = "QR2", use_container_width=True, type="secondary", disabled=st.session_state.isLoading):
-            Run(prompt)
-    quickresponsesB = st.columns(2)
-    with quickresponsesB[0]:
-        prompt = "Teach me something new"
-        if st.button(prompt, key = "QR3", use_container_width=True, type="secondary", disabled=st.session_state.isLoading):
-            Run(prompt)
-    with quickresponsesB[1]:
-        prompt = "Create a new mission"
-        if st.button(f"💠 {prompt}", key = "QR4", use_container_width=True, type="secondary", disabled=st.session_state.isLoading):
-            Run(prompt)
-
-    bottombarcols = st.columns([1, 10])
-    with bottombarcols[1]:
-        P = st.chat_input("What is up?")
-        if P:
-            Run(P)
-    with bottombarcols[0]:
-        if st.button(" ", icon=":material/edit_square:", key="newchat", use_container_width=True, type="tertiary", disabled=st.session_state.isLoading, help = "New Chat"):
-            AppendStarting()
-            Run("New chat")
-
-    # # Display pinned vocabulary table if exists
-    # if st.session_state.pinnedVocab:
-    #     if st.session_state.pinnedVocab["tables"]:
-    #         for i, df in enumerate(st.session_state.pinnedVocab["tables"]):
-    #             st.dataframe(df, use_container_width=True)
-        
-    #     if st.button("Unpin", key="unpin_vocab", type="secondary"):
-    #         st.session_state.pinnedVocab = None
-    #         st.rerun()
 
 def upload_file_to_baserow(file_path):
     DataBaseToken = st.secrets["baserow"]["api_key"]
@@ -2524,7 +2616,7 @@ def map_box():
             if point_name != st.session_state.POI['Name']:
                 st.toast(f"🔰 Travelling to: {point_name}")
                 SoundEngine("depart.mp3")
-                time.sleep(3)
+                #time.sleep(3)
                 cheekytoolify = {"name": "LOAD_PREVIOUS_POI", "variables": [point_name]}
                 st.session_state.isLoading = True
                 load_poi(cheekytoolify)
@@ -2607,8 +2699,8 @@ def Mission_box():
                                         border-radius: 5px;
                                     }
                                 """
-                                with stylable_container(css_styles=cssstyles, key=f"MissionChip{mission['mission']}"):
-                                    st.markdown(f"<p style='text-align: left; color: grey; margin-top: 14px; font-size: 15px; padding-left: 20px; color: #25274B;'>{mission["mission"]}</p>", unsafe_allow_html=True)
+                                with stylable_container(css_styles=cssstyles, key=f"MissionChip{mission['mission']}{uuid.uuid1()}"):
+                                    st.markdown(f"<p style='text-align: left; color: grey; margin-top: 14px; font-size: 15px; padding-left: 20px; padding-right: 20px; color: #25274B;'>{mission["mission"]}</p>", unsafe_allow_html=True)
                                     st.markdown(f"<p style='text-align: left; color: grey; margin-top: 0px; font-size: 13px;padding-left: 20px;'>{mission["Reward"]}</p>", unsafe_allow_html=True)
                                 
                                 
@@ -2626,7 +2718,7 @@ def Mission_box():
                                         border-radius: 5px;
                                     }
                                 """
-                                with stylable_container(css_styles=cssstyles, key=f"MissionChip{mission['mission']}"):
+                                with stylable_container(css_styles=cssstyles, key=f"MissionChip{mission['mission']}{uuid.uuid1()}"):
                                 
                                         st.markdown(f'<p style="padding: 8px; border-radius: 5px; margin-bottom: 10px; color: grey; padding-left: 18px; font-size: 15px; text-decoration: line-through;">{mission["mission"]}</p>', unsafe_allow_html=True)
                                         st.markdown(f"<p style='text-align: left; color: grey; margin-top: -20px; padding-left: 18px; font-size: 13px; text-decoration: line-through;'>{mission["Reward"]}</p>", unsafe_allow_html=True)
