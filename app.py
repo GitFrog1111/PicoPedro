@@ -2000,25 +2000,52 @@ def Tutor_chat():
         except Exception as e:
             print(f"Error creating DataFrame: {e}")
             return None
-    
-    def FormatToolCalls(response):
+        
+    def tutorReadOut(msg, PachoVoice):
+        mp3_bytes = text_to_speech_bytes(msg, '6CS8keYmkwxkspesdyA7')
+        PachoVoice.audio(mp3_bytes, format="audio/mp3", autoplay=True)
+        
+    def FormatToolCalls(response, PachoVoice):
         #remove all text between [ and ]
-        findall = re.findall(r'\[.*?\]', response)
-        if findall:
-            for i in findall:
-                print('findall:', findall)
-                #remove last ]
-                xp = i.split("|", 2)[2]
-                xp = xp[:-1]
-                response = response.replace(i, f'💠{i.split("|")[1]}\n-{xp}\n')
-        return response
+        speakers = []
+        components = []
+        runningString = ""
+        for i in response:
+            runningString += i
+            #print('runningString:', runningString)
+            tool = re.findall(r'\[.*?\]', runningString)
+            if tool:
+                print('tool:', tool[0])
+                components.append([runningString.split('[')[0], 'text'])
+                print('tool found!')
+                
+                if tool[0].startswith('[add_mission'):
+                    print('findall:', tool)
+                    #remove last ]
+                    xp = tool[0].split("|", 2)[2]
+                    xp = xp[:-1]
+                    components.append([f'💠{tool[0].split("|")[1]}\n', 'mission', xp])
+                if tool[0].startswith('[speaker'):
+                    print('findallspeaker:', tool)
+                    #remove last ]
+                    msg = tool[0].split("|", 2)[1]
+                    msg = msg[:-1]
+                    response = response.replace(tool[0], f'{msg}')
+                    components.append([f'**🔊 {msg}**', 'button'])
+                    speakers.append(msg)
+                runningString = ""
+        if runningString:
+            components.append([runningString, 'text'])
+        return response, speakers, components
     
     def renderTutorChat():
-        
         imagecols = st.columns([2, 1, 2])
         with imagecols[1]:
             st.image(f"static/tutorgif.gif", use_container_width=True)
         st.markdown("<p style='text-align: center; color: grey; margin-top: -12px;'>Professor Pacho</p>", unsafe_allow_html=True)
+        with st.container(border=False, height=1):
+            st.container(border=False, height=50)
+            PachoVoice = st.empty()
         
         chat_container = st.container(border=True, height=300)
 
@@ -2028,30 +2055,62 @@ def Tutor_chat():
             avatar = st.session_state.player['Avatar'] if message["role"] == "user" else "✨"
             name = "you" if message["role"] == "user" else "assistant"
             
+            messagecontent = FormatToolCalls(message['content'], PachoVoice)[0]
+            speakers = FormatToolCalls(message['content'], PachoVoice)[1]
+            components = FormatToolCalls(message['content'], PachoVoice)[2]
+
+            
+            message['messagecontent'] = messagecontent
+            message['speakers'] = speakers
+            message['messagecomponents'] = components
+            
             # Check if this message contains tables (only for assistant messages)
             has_tables = False
             if message["role"] == "assistant":
-                tables = detect_markdown_tables(message["content"])
+                tables = detect_markdown_tables(message["messagecontent"])
                 has_tables = len(tables) > 0
             
             with chat_container:
                 # Create columns for message and pin button
-                if has_tables:
-                    msg_col, pin_col = st.columns([10, 1])
-                else:
-                    msg_col = st.container()
-                    pin_col = None
-                
+
+                msg_col, pin_col = st.columns([10, 1])
+
                 with msg_col:
-                    with st.chat_message(name, avatar=avatar):
-                        if message["role"] == "user":
+                    if message["role"] == "user":
+                        with st.chat_message(name, avatar=avatar):
                             st.markdown(f"<p style='text-align: left; background-color: #F0F2F6; padding: 10px; border-radius: 10px;'>{message['content']}</p>", unsafe_allow_html=True)
-                        else:
-                            st.markdown(f"<p style='text-align: left; padding: 10px; border-radius: 10px;'>{FormatToolCalls(message['content'])}</p>", unsafe_allow_html=True)
+                    else:
+                        with st.chat_message(name, avatar=avatar):
+                            #st.write(message['messagecontent'])
+                            for component in message['messagecomponents']:
+                                if component != None:
+                                    if component[1] == 'text':
+                                        st.write(component[0])
+                                    if component[1] == 'button':
+                                        st.container(border=False, height=10)
+                                        if st.button(component[0], key=component[0], use_container_width=False, type="tertiary"):
+                                            tutorReadOut(component[0], PachoVoice)
+                                    if component[1] == 'mission':
+                                        cssstyles = """
+                                            div[data-testid="stMarkdownContainer"] {
+                                                border-radius: 10px;
+                                                padding: 10px;
+                                                border: 1px solid #F0F2F6;
+                                                box-shadow: 0 0 15px 0 rgba(0, 0, 20, 0.03);
+                                            }
+                                        """
+                                        with stylable_container(css_styles=cssstyles, key=f"Mission{uuid.uuid1()}"):
+                                            st.markdown(f"<p style='text-align: left; color: grey; padding-left: 20px; padding-right: 20px; margin-top: 10px; color: #25274B;'>{component[0]}\n</p><p style='text-align: left; padding-left: 20px; padding-right: 20px; margin-top: 0px; color: grey;'>{component[2]}</p>", unsafe_allow_html=True)
+                                            st.container(border=False, height=10)
+                                        
+                                        
+                                    
+
                 
                 # Add pin button for messages with tables
-                if has_tables and pin_col:
-                    with pin_col:
+                
+                with pin_col:
+                    if has_tables:
                         st.container(border=False, height=10)
                         if st.button("📌", key=f"pin_{i}", help="Pin to view", type="tertiary"):
                             # Convert all tables in this message to DataFrames
@@ -2063,7 +2122,7 @@ def Tutor_chat():
                             
                             # Set pinnedVocab to the message content and tables
                             st.session_state.pinnedVocab = {
-                                "content": message["content"],
+                                "content": message["messagecontent"],
                                 "tables": message_tables,
                                 "timestamp": i
                             }
@@ -2089,8 +2148,8 @@ def Tutor_chat():
                     )
                     response = response.choices[0].message.content
                     with st.empty():
-                        st.write_stream(Fakestream(FormatToolCalls(response)))
-                        st.markdown(f"<p style='text-align: left; padding: 10px; border-radius: 10px;'>{FormatToolCalls(response)}</p>", unsafe_allow_html=True)
+                        st.write_stream(Fakestream(FormatToolCalls(response, PachoVoice)[0]))
+                        st.markdown(f"<p style='text-align: left; padding: 10px; border-radius: 10px;'>{FormatToolCalls(response, PachoVoice)[0]}</p>", unsafe_allow_html=True)
                     
                     
                     #ChangeEggs(-1)
@@ -2142,7 +2201,7 @@ def Tutor_chat():
                 Run(prompt)
 
         
-        Prompt = st.chat_input("Ask Professor Pacho anything!")
+        Prompt = st.chat_input("Ask me anything!")
         if Prompt:
             Run(Prompt)
     
