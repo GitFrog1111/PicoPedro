@@ -128,6 +128,8 @@ def debug():
             KillCharacter({"name": "KILL_CHARACTER", "variables": [random_character['name'], f'{random_character['name']} has been killed']})
         if st.button("Clear Tutor History"):
             st.session_state.TutorHistory = []
+        if st.button("Roll Dice"):
+            rollDice({"name": "ROLL_DICE", "variables": ["How many moonroot will you find?", 5, 'You gather 5 moonroot']})
 
         with st.container():
             chosenstates = ["Conversation", "toolbuffer", "player", "PoiList", "inventory", "characters", "missionList", "ShowVocab", 'close']
@@ -335,7 +337,7 @@ def Main():
     #     st.rerun() # Rerun to reflect the new isLoading state and enable UI
 
     SoundPlayer()
-    #debug()
+    debug()
 
 
 async def execute_image_generation_tasks(image_tasks):
@@ -393,6 +395,7 @@ def Toolbuffer():
                     image_generation_tools.append({'tool': tool, 'func': new_character_async})
                 elif tool_name == 'ADD_ITEM_TO_INVENTORY':
                     image_generation_tools.append({'tool': tool, 'func': new_item_async})
+                
             else:
                 other_tools.append(tool)
         
@@ -1071,14 +1074,14 @@ def fal_iconimg2img(prompt, image):
         "image_url": image,
         "negative_prompt": "two, 2, multiple, duplicate, spritesheet, seamless, seamless texture, repetition, Text, label, words, title, caption, border, voxel, 3d, dark border, bland, flat color background, feet, shoes",
         "loras": [{"path": 'https://civitai.com/api/download/models/160844?type=Model&format=SafeTensor', "scale": 1.0}],
-        "num_inference_steps": 12,
-        "guidance_scale": 6,
+        "num_inference_steps": 20,
+        "guidance_scale": 7,
         "num_images": 1,
         "enable_safety_checker": True,
         "output_format": "jpeg",
         "image_size": {
-            "height": 512,
-            "width": 512
+            "height": 1024,
+            "width": 1024
         }
         },
         with_logs = True,
@@ -1209,11 +1212,15 @@ async def fal_icon_async(prompt: str):
                 "prompt": prompt,
                 "negative_prompt": "two, 2, multiple, duplicate, spritesheet, seamless, seamless texture, repetition, Text, label, words, title, caption, border, voxel, 3d, dark border, bland, flat color background",
                 "loras": [{"path": 'https://civitai.com/api/download/models/160844?type=Model&format=SafeTensor', "scale": 1.0}],
-                "num_inference_steps": 12,
-                "guidance_scale": 6,
+                "num_inference_steps": 20,
+                "guidance_scale": 7,
                 "num_images": 1,
                 "enable_safety_checker": True,
                 "output_format": "jpeg",
+                "image_size": {
+                    "height": 1024,
+                    "width": 1024
+                }
             }
         )
         result = await handler.get()
@@ -1348,12 +1355,18 @@ def text_to_speech_bytes(text: str, voice_id: str="WAixHs5LYSwPVDJxQgN7") -> byt
 
 
 def AddUserContext():
-    userContext = "**Updated User Context**\n**PlayerData:**\n "
+
+    #loop through delete old
+    for message in st.session_state.Conversation:
+        if message['content'].startswith('**Current User Context**'):
+            st.session_state.Conversation.remove(message)
+
+    userContext = "**Current User Context**\n**PlayerData:**\n "
     userContext += f"Name: {st.session_state.player['Name']}\n"
     userContext += f"Gender: {st.session_state.player['Gender']}\n"
     userContext += f"Native Language: {st.session_state.player['NativeLanguage']}\n"
     userContext += f"Learning Language: {st.session_state.player['LearningLanguage']}\n"
-    userContext += f"The player describes themselves as '{st.session_state.player['Difficulty']}' at {st.session_state.player['LearningLanguage']}, talk at this level.\n"
+    userContext += f"The player now describes themselves as '{st.session_state.player['Difficulty']}' at {st.session_state.player['LearningLanguage']}, talk at this level.\n"
 
     userContext += "\n**Player Inventory:**\n"
     userContext += f"Money: {Currencylookup.get(st.session_state.player.get('LearningLanguage', 'English'), '€')}{st.session_state.player.get('Money', 0):.2f}\n"
@@ -1378,7 +1391,8 @@ def AddUserContext():
     for mission in st.session_state.missionList:
         idscount += 1
         if mission['Active?']:
-            MissionsString += f"Mission_ID: {idscount}, Title: {mission['mission']}, Reward: {mission['Reward']}\n"
+            #MissionsString += f"Mission_ID: {idscount}, Title: {mission['mission']}, Reward: {mission['Reward']}\n"
+            MissionsString += f"{idscount}. {mission['mission']}, Reward: {mission['Reward']}\n"
             
     if MissionsString == "":
         MissionsString += "- Empty -\n"
@@ -1551,6 +1565,56 @@ def AddXP(amount):
     if oldxp//100 != newxp//100:
         st.session_state.toolbuffer.append({"name": "LEVELUP", "variables": []})
 
+@st.dialog(" ")
+def rollDice(tool):
+    question = tool['variables'][0]
+    roll = tool['variables'][1]
+    outcome = tool['variables'][2]
+
+    def step1():
+        with st.container(border=False):
+            st.container(border=False, height = 100)
+            st.markdown(f"<p style='text-align: center; color: black; margin-top: 0px; font-size: 14px;'>{question}</p>", unsafe_allow_html=True)
+            st.container(border=False, height = 100)
+            time.sleep(1)
+                
+            
+        
+    def step2():
+        with st.container(border=False):
+            with open(f"DiceRolls/roll{roll}.gif", "rb") as file_:
+                contents = file_.read()
+                data_url = base64.b64encode(contents).decode("utf-8")
+
+            st.markdown(
+                f'''
+                <img src="data:image/gif;base64,{data_url}" 
+                    alt="diceroll{roll}" 
+                    width="100%" 
+                    style="margin-top: 0px;">
+                ''',
+                unsafe_allow_html=True
+            )
+            time.sleep(14)
+                
+    def step3():
+        with st.container(border=False):
+            st.container(border=False, height = 100)
+            st.markdown(f"<p style='text-align: center; color: grey; margin-top: -10px; font-size: 13px;'>{outcome}</p>", unsafe_allow_html=True)
+            st.container(border=False, height = 100)
+
+    with st.empty():
+        step1()
+        st.empty()
+        time.sleep(1)
+        step2()
+        st.empty()
+        time.sleep(1)
+        step3()    
+
+
+
+
 def lerp(a, b, t):
     return (1 - t) * a + t * b
 
@@ -1625,7 +1689,7 @@ def AI(conversation):
 def get_response(conversation):
     messages = [{"role": "system", "content": st.session_state.SystemPrompt}] + conversation
     response = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-5-mini",
         messages=messages
     )
     #if response code good
@@ -1686,7 +1750,7 @@ def character_chat(Character):
         if actual_character:
             Character = actual_character # Use the found dictionary
         else:
-            st.error(f"Character data is invalid or character '{char_name_to_find}' not found.")
+            print(f"Character data is invalid or character '{char_name_to_find}' not found.")
             # Close the dialog by returning, as st.dialog functions close on return.
             return
 
@@ -1714,7 +1778,9 @@ def character_chat(Character):
         with center:
             st.markdown(f"<p style='text-align: center; color: grey; margin-top: -18px; font-size: 14px;'>👥</p>", unsafe_allow_html=True)
     
-    Speaker = st.empty()
+    with st.container(border=False, height = 1):
+        st.container(border=False, height = 50)
+        Speaker = st.empty()
 
 
     # Ensure 'convoHistory' key exists in the Character dictionary, initializing if necessary.
@@ -1951,58 +2017,16 @@ def Tutor_chat_Sound():
 @st.dialog(" ")
 def Tutor_chat():
     # Initialize session state variables
-    if "vocabTables" not in st.session_state:
-        st.session_state.vocabTables = []
     if "TutorHistory" not in st.session_state:
         st.session_state.TutorHistory = []
     st.session_state.ModalOpen = True
 
-
-    def detect_markdown_tables(text):
-        """Detect and extract markdown tables from text"""
-        import re
-        
-        # Pattern to match markdown tables
-        table_pattern = r'(?:\|.*\|.*\n)+(?:\|[-\s:|]*\|.*\n)+(?:\|.*\|.*\n)*'
-        tables = re.findall(table_pattern, text, re.MULTILINE)
-        return tables
-
-    def markdown_table_to_dataframe(table_text):
-        """Convert markdown table to pandas DataFrame"""
-        lines = table_text.strip().split('\n')
-        
-        # Remove empty lines and clean up
-        lines = [line.strip() for line in lines if line.strip()]
-        
-        if len(lines) < 2:
-            return None
-        
-        # Extract headers
-        headers = [cell.strip() for cell in lines[0].split('|') if cell.strip()]
-        
-        # Skip the separator line (line 1)
-        data_lines = lines[2:]
-        
-        # Extract data rows
-        data = []
-        for line in data_lines:
-            row = [cell.strip() for cell in line.split('|') if cell.strip()]
-            if row:  # Only add non-empty rows
-                data.append(row)
-        
-        if not data:
-            return None
-        
-        # Create DataFrame
-        try:
-            df = pd.DataFrame(data, columns=headers)
-            return df
-        except Exception as e:
-            print(f"Error creating DataFrame: {e}")
-            return None
         
     def tutorReadOut(msg, PachoVoice):
-        mp3_bytes = text_to_speech_bytes(msg, '6CS8keYmkwxkspesdyA7')
+        #voice id is the first from chasen learninglanguage in voices.json
+
+        voice_id = st.session_state.AvailableVoices[0][2]
+        mp3_bytes = text_to_speech_bytes(msg, voice_id)
         PachoVoice.audio(mp3_bytes, format="audio/mp3", autoplay=True)
         
     def FormatToolCalls(response, PachoVoice):
@@ -2016,27 +2040,37 @@ def Tutor_chat():
             tool = re.findall(r'\[.*?\]', runningString)
             if tool:
                 print('tool:', tool[0])
-                components.append([runningString.split('[')[0], 'text'])
+                components.append(['text', runningString.split('[')[0]])
                 print('tool found!')
-                
-                if tool[0].startswith('[add_mission'):
+                #remove first [ last ]
+                tool[0] = tool[0].replace('[', '')
+                tool[0] = tool[0].replace(']', '')
+
+                if tool[0].startswith('add_mission'):
                     print('findall:', tool)
                     #remove last ]
                     xp = tool[0].split("|", 2)[2]
-                    xp = xp[:-1]
-                    components.append([f'💠{tool[0].split("|")[1]}\n', 'mission', xp])
-                if tool[0].startswith('[speaker'):
+                    
+                    components.append(['mission', f'💠{tool[0].split("|")[1]}\n', xp])
+                if tool[0].startswith('speaker'):
                     print('findallspeaker:', tool)
-                    #remove last ]
-                    msg = tool[0].split("|", 2)[1]
-                    msg = msg[:-1]
-                    response = response.replace(tool[0], f'{msg}')
-                    components.append([f'**🔊 {msg}**', 'button'])
-                    speakers.append(msg)
+                    
+                    splittool = tool[0].split("|")
+                    for tool in splittool:
+                        print(tool)
+
+                    response = response.replace(tool[0], f'{splittool[1]}')
+                    components.append(['speaker', splittool[1], splittool[2], splittool[3]])
+                    # components.append(['button', f'**🔊 {splittool[1]}**'])
+                    # components.append(['caption', f'{splittool[2]}'])
+                    # components.append(['text', f'{splittool[3]}'])
+        
                 runningString = ""
+        
         if runningString:
-            components.append([runningString, 'text'])
-        return response, speakers, components
+            components.append(['text', runningString])
+            
+        return response, components
     
     def renderTutorChat():
         imagecols = st.columns([2, 1, 2])
@@ -2048,87 +2082,120 @@ def Tutor_chat():
             PachoVoice = st.empty()
         
         chat_container = st.container(border=True, height=300)
-
-        for i, message in enumerate(st.session_state.TutorHistory):
-            if message["role"] == "system":
-                continue
+        
+        def renderMessage(message):
             avatar = st.session_state.player['Avatar'] if message["role"] == "user" else "✨"
             name = "you" if message["role"] == "user" else "assistant"
             
             messagecontent = FormatToolCalls(message['content'], PachoVoice)[0]
-            speakers = FormatToolCalls(message['content'], PachoVoice)[1]
-            components = FormatToolCalls(message['content'], PachoVoice)[2]
+            components = FormatToolCalls(message['content'], PachoVoice)[1]
 
-            
-            message['messagecontent'] = messagecontent
-            message['speakers'] = speakers
-            message['messagecomponents'] = components
-            
-            # Check if this message contains tables (only for assistant messages)
-            has_tables = False
-            if message["role"] == "assistant":
-                tables = detect_markdown_tables(message["messagecontent"])
-                has_tables = len(tables) > 0
+            if message["role"] == "user":
+                with st.chat_message(name, avatar=avatar):
+                    st.markdown(f"<p style='text-align: left; background-color: #F0F2F6; padding: 10px; border-radius: 10px; padding-left: 12px; padding-right: 20px;'>{message['content']}</p>", unsafe_allow_html=True)
+            else:
+                with st.chat_message(name, avatar=avatar):
+                    
+                    message['messagecontent'] = messagecontent
+                    message['messagecomponents'] = components
+                    compid = -1
+                    countspeakers = 0
+                    
+                    for i in range(len(message['messagecomponents'])):
+                        countspeakers += 1
+                    for component in message['messagecomponents']:
+
+                        compid += 1
+                        if component != None:
+                            if component[0] == 'text':
+                                #regex cleanup of stray numberings
+                                if len(component[1]) < 5:
+                                    print('cullingA: ', component[1])
+                                    continue
+                                
+                                #if a line is less than 5 as well cull it
+                                stringlist = component[1].split('\n')
+                                buildstring = ''
+                                for line in stringlist:
+                                    if len(line) > 3:
+                                        buildstring += line+'\n'
+                                    else:
+                                        print('culling: ', line)
+                                component[1] = buildstring
+                                #print(component[1])
+
+                                st.write(component[1])
+
+                            if component[0] == 'mission':
+                                cssstyles = """
+                                    div[data-testid="stMarkdownContainer"] {
+                                        border-radius: 10px;
+                                        padding: 10px;
+                                        border: 1px solid #F0F2F6;
+                                        box-shadow: 0 0 15px 0 rgba(0, 0, 20, 0.03);
+                                    }
+                                """
+                                with stylable_container(css_styles=cssstyles, key=f"Mission{uuid.uuid1()}"):
+                                    st.markdown(f"<p style='text-align: left; color: grey; padding-left: 20px; padding-right: 20px; margin-top: 10px; color: #25274B;'>{component[1]}\n</p><p style='text-align: left; padding-left: 20px; padding-right: 20px; margin-top: 0px; color: grey;'>{component[2]}</p>", unsafe_allow_html=True)
+                                    st.container(border=False, height=10)
+
+                            if component[0] == 'speaker':
+                                colors = ["blue", "green", "orange", "red", "violet"]
+                                color = colors[(compid + i) % len(colors)]
+                            
+                                with st.container(border=True):
+                                    headercols = st.columns([10, 1, 2])
+                                    with headercols[0]:
+                                        text = component[1]
+                                        text = text[0].upper() + text[1:]
+
+                                        phonetic = component[2]
+                                        
+                                        translation = component[3]
+                                        translation = translation[0].upper() + translation[1:]
+
+                                        st.subheader(f'{translation}', divider=color)
+                                    with headercols[2]:
+                                        if st.button('📌', key = f'pin{text}', use_container_width=True, type="tertiary"):
+                                            if "pinnedVocab" not in st.session_state:
+                                                st.session_state.pinnedVocab = []
+                                            if st.session_state.pinnedVocab == None:
+                                                st.session_state.pinnedVocab = []
+                                            state = False
+                                            for lol in st.session_state.pinnedVocab:
+                                                if text == lol:
+                                                    state = True
+                                                    break
+                                            if state == False:
+                                                st.session_state.pinnedVocab.append([text, translation, phonetic])
+                                            else:
+                                                st.session_state.pinnedVocab.remove([text, translation, phonetic])
+                                            
+
+
+                                    #st.container(border=False, height=4)
+                                    if st.button(f'**{text}**', key=text, use_container_width=False, type="tertiary"):
+                                        tutorReadOut(text, PachoVoice)
+                                        
+                                    st.markdown(f"<p style='text-align: left; color: grey; margin-top: -18px; font-size: 13px; padding-left: 0px;'>{phonetic}</p>", unsafe_allow_html=True)
+                                    #st.container(border=False, height=10)
+
+                    
+
+        for i, message in enumerate(st.session_state.TutorHistory):         
             
             with chat_container:
                 # Create columns for message and pin button
+                if message["role"] == "system":
+                    continue
 
                 msg_col, pin_col = st.columns([10, 1])
 
                 with msg_col:
-                    if message["role"] == "user":
-                        with st.chat_message(name, avatar=avatar):
-                            st.markdown(f"<p style='text-align: left; background-color: #F0F2F6; padding: 10px; border-radius: 10px;'>{message['content']}</p>", unsafe_allow_html=True)
-                    else:
-                        with st.chat_message(name, avatar=avatar):
-                            #st.write(message['messagecontent'])
-                            for component in message['messagecomponents']:
-                                if component != None:
-                                    if component[1] == 'text':
-                                        st.write(component[0])
-                                    if component[1] == 'button':
-                                        st.container(border=False, height=10)
-                                        if st.button(component[0], key=component[0], use_container_width=False, type="tertiary"):
-                                            tutorReadOut(component[0], PachoVoice)
-                                    if component[1] == 'mission':
-                                        cssstyles = """
-                                            div[data-testid="stMarkdownContainer"] {
-                                                border-radius: 10px;
-                                                padding: 10px;
-                                                border: 1px solid #F0F2F6;
-                                                box-shadow: 0 0 15px 0 rgba(0, 0, 20, 0.03);
-                                            }
-                                        """
-                                        with stylable_container(css_styles=cssstyles, key=f"Mission{uuid.uuid1()}"):
-                                            st.markdown(f"<p style='text-align: left; color: grey; padding-left: 20px; padding-right: 20px; margin-top: 10px; color: #25274B;'>{component[0]}\n</p><p style='text-align: left; padding-left: 20px; padding-right: 20px; margin-top: 0px; color: grey;'>{component[2]}</p>", unsafe_allow_html=True)
-                                            st.container(border=False, height=10)
-                                        
+                    renderMessage(message)
                                         
                                     
 
-                
-                # Add pin button for messages with tables
-                
-                with pin_col:
-                    if has_tables:
-                        st.container(border=False, height=10)
-                        if st.button("📌", key=f"pin_{i}", help="Pin to view", type="tertiary"):
-                            # Convert all tables in this message to DataFrames
-                            message_tables = []
-                            for table in tables:
-                                df = markdown_table_to_dataframe(table)
-                                if df is not None:
-                                    message_tables.append(df)
-                            
-                            # Set pinnedVocab to the message content and tables
-                            st.session_state.pinnedVocab = {
-                                "content": message["messagecontent"],
-                                "tables": message_tables,
-                                "timestamp": i
-                            }
-                            st.session_state.ShowVocab = True
-                            
-                            st.rerun()
 
         def Run(prompt):
             st.session_state.TutorHistory.append({"role": "user", "content": prompt})
@@ -2138,42 +2205,30 @@ def Tutor_chat():
 
             client = OpenAI(api_key=openai_api_key)
             with chat_container:
-                with st.chat_message("assistant", avatar="✨"):
-                    response = client.chat.completions.create(
-                        model="gpt-4o-mini",
-                        messages=[
-                            {"role": m["role"], "content": m["content"]}
-                            for m in st.session_state.TutorHistory
-                        ]
-                    )
-                    response = response.choices[0].message.content
-                    with st.empty():
-                        st.write_stream(Fakestream(FormatToolCalls(response, PachoVoice)[0]))
-                        st.markdown(f"<p style='text-align: left; padding: 10px; border-radius: 10px;'>{FormatToolCalls(response, PachoVoice)[0]}</p>", unsafe_allow_html=True)
-                    
-                    
-                    #ChangeEggs(-1)
-                    tools = check_for_tools(response)
-                    if tools:
-                        handle_tools(tools)
-                    #st.session_state.isLoading = False
-                    
+          
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": m["role"], "content": m["content"]}
+                        for m in st.session_state.TutorHistory
+                    ]
+                )
 
-            st.session_state.TutorHistory.append({"role": "assistant", "content": response})
-            # Scan response for tables and add to vocabTables
-            tables = detect_markdown_tables(response)
-            if tables:
-                for table in tables:
-                    df = markdown_table_to_dataframe(table)
-                    if df is not None:
-                        # Add to vocabTables with metadata
-                        table_entry = {
-                            "dataframe": df,
-                            "raw_table": table,
-                            "message_index": len(st.session_state.TutorHistory),
-                            "timestamp": len(st.session_state.TutorHistory)
-                        }
-                        st.session_state.vocabTables.append(table_entry)
+                response = response.choices[0].message.content
+                st.session_state.TutorHistory.append({"role": "assistant", "content": response})
+                
+                with st.empty():
+                    st.write_stream(Fakestream(FormatToolCalls(response, PachoVoice)[0]))
+                    st.empty()
+                    time.sleep(1)                    
+                    renderMessage({"role": "assistant", "content": response})
+                                    
+                #ChangeEggs(-1)
+                tools = check_for_tools(response)
+                if tools:
+                    handle_tools(tools)
+                #st.session_state.isLoading = False
+
             
             
 
@@ -2190,6 +2245,7 @@ def Tutor_chat():
             prompt = "More!"
             if st.button(prompt, key = "QR2", use_container_width=True, type="secondary"):
                 Run(prompt)
+        
         quickresponsesB = st.columns(2)
         with quickresponsesB[0]:
             prompt = "Teach me something new"
@@ -2200,7 +2256,6 @@ def Tutor_chat():
             if st.button(f"💠 {prompt}", key = "QR4", use_container_width=True, type="secondary"):
                 Run(prompt)
 
-        
         Prompt = st.chat_input("Ask me anything!")
         if Prompt:
             Run(Prompt)
@@ -2222,6 +2277,7 @@ def Tutor_chat():
         st.session_state.TutorHistory = [{"role": "system", "content": system_prompt}, {"role": "assistant", "content": "What should we learn today?"}]
         
         st.session_state.TutorHistory.extend(copytutorhistory)
+    
     get_system_prompt()
     renderTutorChat()     
 
@@ -3114,7 +3170,7 @@ def renderMainUI():
                     background-size: cover;
                     background-position: center;
                     color: transparent; /* To hide any button text, as label is empty */
-                    border-radius: 0px;
+                    border-radius: 100%;
                     width: 64px;
                     height: 64px;
                     margin-left: left;
@@ -3143,13 +3199,24 @@ def renderMainUI():
     
     def PinnedVocab():
         with VocabEmpty:
+            
             if st.session_state.pinnedVocab:
                 with st.container(border=False, height=200):
                 
                     if st.session_state.ShowVocab == True:
-                        if st.session_state.pinnedVocab["tables"]:
-                            for i, df in enumerate(st.session_state.pinnedVocab["tables"]):
-                                st.table(df)
+                        if len(st.session_state.pinnedVocab) > 0:
+                            for i in st.session_state.pinnedVocab:
+                                with st.container(border=False):
+                                    cols = st.columns([1, 20, 1, 2, 1])
+                                    with cols[1]:
+                                        st.markdown(f'{i[0]}', help = i[1])
+                                        st.markdown(f"<p style='text-align: left; color: grey; margin-top: -18px; font-size: 13px; padding-left: 0px;'>{i[2]}</p>", unsafe_allow_html=True)
+                                    
+                                        
+                                    with cols[3]:
+                                        if st.button('', icon = ':material/close:', key = f'pin{i[0]}_UI', use_container_width=True, type="tertiary"):
+                                            st.session_state.pinnedVocab.remove(i)
+                                        
                         with CharactersEmpty:
                             RenderCharacters(280)
                     else:
@@ -3179,7 +3246,7 @@ def renderMainUI():
         if prompt:
             #SoundEngine("sendmessage.mp3")
             st.session_state.isLoading = True
-            st.session_state.Prompt = prompt
+            st.session_state.Prompt = f"(talking in commandbox): {prompt}"
             print('prompt:', prompt)
             st.rerun()
 
@@ -3346,9 +3413,9 @@ def Onboarding(id = None):
 
                 langcols = st.columns(2)
                 with langcols[0]:
-                    Nativelang = st.selectbox("I normally speak", options=["English", "French", "German", "Italian", "Russian"], index=0)
+                    Nativelang = st.selectbox("I normally speak", options=["English", "French", "German", "Italian", "Russian", "Thai"], index=0)
                 with langcols[1]:
-                    Learninglang = st.selectbox("I want to learn", options=["English", "French", "German", "Italian", "Russian"], index=1)
+                    Learninglang = st.selectbox("I want to learn", options=["English", "French", "German", "Italian", "Russian", "Thai"], index=1)
 
                 Difficulty = st.select_slider("Difficulty", options=st.session_state.DifficultyOptions, value='Beginner')
             
@@ -3722,7 +3789,7 @@ else:
         st.markdown("<p style='text-align: center; color: grey; margin-top: -10px; font-size: 14px;'>By continuing, you agree to our <a href='https://www.picopacho.com/privacy_policy' target='_blank'>Privacy Policy</a> and <a href='https://www.picopacho.com/terms_of_service' target='_blank'>Terms of Service</a>.</p>", unsafe_allow_html=True)
 
 if "SupportedLanguages" not in st.session_state:
-    st.session_state.SupportedLanguages = ["English", "French", "German", "Italian", "Russian"]
+    st.session_state.SupportedLanguages = ["English", "French", "German", "Italian", "Russian", "Thai"]
 
 if 'DifficultyOptions' not in st.session_state:
     st.session_state.DifficultyOptions = ["Completely New", "I know some basics", "Beginner", "Conversational", "Intermediate", "Advanced", "Fluent"]

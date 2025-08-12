@@ -1,4 +1,11 @@
 app:
+
+fix async threads ting
+fix tutorchat updating
+fix instant character low res
+double check the poi image effects
+
+
 Fix st paywall
 reexport professor pacho fix line on left
 try new loading anim
@@ -10,13 +17,9 @@ add dice rolling (tool with ai deciding outcome) [dice_roll|5|Baal dies]
 add killing players (instantchar to change pic)
 
 AND THEN LAUNCH!
-publish app on gauth
-leave testing mode in stripe
-make youtube
 market...
 
 stretch goals
 elevenlabs upgrade
 add langs
-parallel ai calls
 game saves
