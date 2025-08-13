@@ -1157,7 +1157,7 @@ def fal_instantChar(image, promptAction, prompt):
     result = fal_client.subscribe(
         "fal-ai/instant-character",
         arguments={
-            "prompt": f'character is {promptAction} pixelart, sholders-up portrait of character talking',
+            "prompt": f'character is {promptAction}, soft dreamy pixelart, sholders-up portrait of character talking',
             "image_url": image,
             "num_inference_steps": 8,
             "guidance_scale": 3,
@@ -1294,8 +1294,8 @@ async def fal_iconimg2img_async(prompt: str, image_url: str):
                 "enable_safety_checker": True,
                 "output_format": "jpeg",
                 "image_size": {
-                    "height": 512,
-                    "width": 512
+                    "height": 1024,
+                    "width": 1024
                 }
             }
         )
@@ -1638,6 +1638,7 @@ def KillCharacter(tool):
     for character in st.session_state.characters:
         if character['name'].lower() == tool['variables'][0].lower():
             c = character
+            c['is_dead'] = True
     
     st.title(f"💀 {tool['variables'][0]} has died")
     st.container(border=False, height = 10)
@@ -1711,7 +1712,7 @@ def Fakestream(text):
         st.session_state.lasttext = text
         for char in text:
             rand = random.randint(1, 5)
-            time.sleep(rand/500)
+            time.sleep(rand/100)
             yield char
         
 def speechtotext(recording, Character):
@@ -2220,7 +2221,7 @@ def Tutor_chat():
                 with st.empty():
                     st.write_stream(Fakestream(FormatToolCalls(response, PachoVoice)[0]))
                     st.empty()
-                    time.sleep(1)                    
+                    time.sleep(0.1)                    
                     renderMessage({"role": "assistant", "content": response})
                                     
                 #ChangeEggs(-1)
@@ -3012,6 +3013,17 @@ def renderMainUI():
                     # Prepare CSS for the stylable container
                     # Using f-string to dynamically set the background image
                     # Properties are taken from the provided example
+
+                    # if they are dead apply a filter to make them grey
+                    if character.get('is_dead', False) == True:
+                        grayscale = 80
+                        contrast = 50
+                        brightness = 130
+                    else:
+                        grayscale = 0
+                        contrast = 100
+                        brightness = 100
+
                     css_styles = f"""
                         button {{
                             background-image: url('{character_image_url}');
@@ -3025,6 +3037,7 @@ def renderMainUI():
                             margin-left: auto; /* Horizontally center the button in its column cell */
                             margin-right: auto;
                             display: block; /* Necessary for margin: auto to work for block elements */
+                            filter: grayscale({grayscale}%) contrast({contrast}%) brightness({brightness}%);
                         }}
                     """
                     
@@ -3047,7 +3060,7 @@ def renderMainUI():
                                     on_click=on_click_action,
                                     args=click_args,
                                     key=button_key,
-                                    disabled=st.session_state.isLoading
+                                    disabled=st.session_state.isLoading or character.get('is_dead', False) == True
                                 )
                             # Display character name as a centered caption below the button
                             st.markdown(
@@ -3063,7 +3076,7 @@ def renderMainUI():
                                     on_click=on_click_action,
                                     args=click_args,
                                     key=button_key,
-                                    disabled=st.session_state.isLoading
+                                    disabled=st.session_state.isLoading or character.get('is_dead', False) == True
                                 )
                             st.markdown(
                                 f"<p style='text-align: center; margin-top: 2px;'>{character_name}</p>", 
@@ -3078,7 +3091,7 @@ def renderMainUI():
                                     on_click=on_click_action,
                                     args=click_args,
                                     key=button_key,
-                                    disabled=st.session_state.isLoading
+                                    disabled=st.session_state.isLoading or character.get('is_dead', False) == True
                                 )
                             st.markdown(
                                 f"<p style='text-align: center; margin-top: 2px;'>{character_name}</p>", 
