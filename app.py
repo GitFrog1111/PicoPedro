@@ -412,9 +412,8 @@ def Toolbuffer():
                     asyncio.set_event_loop(loop)
                 
                 # Run concurrent image generation
-                results = loop.run_until_complete(
-                    execute_image_generation_tasks(image_generation_tools)
-                )
+                results = loop.run_until_complete(execute_image_generation_tasks(image_generation_tools))
+
                 
                 print(f"Completed concurrent image generation: {len(results)} results")
                 
@@ -898,8 +897,10 @@ async def new_character_async(tool):
                 break
         
         # Generate character image
-        character_prompt = f'PixArFK style, portrait of {character_name}, {character_description}, detailed background, game character icon, pixel art, shoulders-up shot, 3/4 view, jrpg style character icon of a {st.session_state.player["LearningLanguage"]} person'
-        character_image = await fal_icon_async(character_prompt)
+        character_prompt = f'PixArFK style, portrait of {character_name}, {character_description}, detailed background, game character icon, SOFT DREAMY pixel art, shoulders-up shot, 3/4 view, jrpg style character icon of a {st.session_state.player["LearningLanguage"]} person'
+        
+        placeholder_image = 'https://v3.fal.media/files/tiger/eCsW8xKiT7ynxw1mVR6ba.jpeg'
+        character_image = await fal_iconimg2img_async(character_prompt, placeholder_image)
         
         # Add character to session state
         st.session_state.characters.append({
@@ -1160,7 +1161,7 @@ def fal_instantChar(image, promptAction, prompt):
             "prompt": f'character is {promptAction}, soft dreamy pixelart, sholders-up portrait of character talking',
             "image_url": image,
             "num_inference_steps": 8,
-            "guidance_scale": 3,
+            "guidance_scale": 6,
             "image_size": {
                 "height": 512,
                 "width": 512
@@ -1286,11 +1287,12 @@ async def fal_iconimg2img_async(prompt: str, image_url: str):
             arguments={
                 "prompt": prompt,
                 "image_url": image_url,
-                "negative_prompt": "two, 2, multiple, duplicate, spritesheet, seamless, seamless texture, repetition, Text, label, words, title, caption, border, voxel, 3d, dark border, bland, flat color background, feet, shoes",
+                "negative_prompt": "two, 2, multiple, duplicate, spritesheet, seamless, seamless texture, repetition, Text, label, words, title, caption, border, voxel, 3d, dark border, bland, flat color background, feet, shoes, furry, anthro",
                 "loras": [{"path": 'https://civitai.com/api/download/models/160844?type=Model&format=SafeTensor', "scale": 1.0}],
-                "num_inference_steps": 12,
-                "guidance_scale": 6,
+                "num_inference_steps": 30,
+                "guidance_scale": 3,
                 "num_images": 1,
+                "strength": 1,
                 "enable_safety_checker": True,
                 "output_format": "jpeg",
                 "image_size": {
@@ -1314,10 +1316,10 @@ async def fal_instantChar_async(image_url: str, prompt_action: str, prompt: str)
         handler1 = await fal_client.submit_async(
             "fal-ai/instant-character",
             arguments={
-                "prompt": f'character is {prompt_action} pixelart, sholders-up portrait of character talking',
+                "prompt": f'character is {prompt_action}, soft dreamypixelart, sholders-up portrait of character talking',
                 "image_url": image_url,
                 "num_inference_steps": 8,
-                "guidance_scale": 3,
+                "guidance_scale": 6,
                 "image_size": {
                     "height": 512,
                     "width": 512
