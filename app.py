@@ -16,6 +16,7 @@ import os
 import time
 from st_paywall import add_auth
 import uuid
+from elevenlabs import ElevenLabs
 from elevenlabs import VoiceSettings
 from elevenlabs.client import ElevenLabs
 from dotenv import load_dotenv
@@ -130,6 +131,9 @@ def debug():
             st.session_state.TutorHistory = []
         if st.button("Roll Dice"):
             rollDice({"name": "ROLL_DICE", "variables": ["How many moonroot will you find?", 5, 'You gather 5 moonroot']})
+        if st.button("Voice Design"):
+            sp = voicedesign(text = "hello this is a test of the new voice, yipeeeeee [laughs maniacally] and i Uhh and i cannot believe i have to write all this out just for a simple text to speech i mean really, this is just a test, [whispers] what could go wrong?", Description = "A sassy squeaky mouse")
+            st.audio(sp, format="audio/mp3", autoplay=True)
 
         with st.container():
             chosenstates = ["Conversation", "toolbuffer", "player", "PoiList", "inventory", "characters", "missionList", "ShowVocab", 'close']
@@ -248,7 +252,7 @@ def Main():
             "Difficulty": 'Beginner',
             "ProfilePicture": 1,
             "XP": 0,
-            "Money": 2.50,
+            "Money": 3.50,
             "Volume": 50,
             "GameTheme": ''
         }
@@ -296,7 +300,7 @@ def Main():
 
     if "Conversation" not in st.session_state:
         st.session_state.Conversation = [
-            {"role": "assistant", "content": "<thinking> Start of game, I'll come up with an interesting start location, then call the new POI tool</thinking>"},
+            {"role": "assistant", "content": "<planning> Start of game, I'll write up with some unique lore and a loose story arc of the experience. Then I'll create an interesting start location by calling the new POI tool, some characters, and a few starter items</planning>"},
         ]
         AI(st.session_state.Conversation)
         #st.session_state.Conversation.append({"role": "assistant", "content": AI(st.session_state.Conversation)})
@@ -388,13 +392,15 @@ def Toolbuffer():
         
         for tool in tools:
             tool_name = tool['name'].upper()
-            if tool_name in ['NEW_POI', 'GENERATE_CHARACTER', 'ADD_ITEM_TO_INVENTORY']:
+            if tool_name in ['NEW_POI', 'GENERATE_CHARACTER', 'ADD_ITEM_TO_INVENTORY', 'EDIT_POI']:
                 if tool_name == 'NEW_POI':
                     image_generation_tools.append({'tool': tool, 'func': new_poi_async})
                 elif tool_name == 'GENERATE_CHARACTER':
                     image_generation_tools.append({'tool': tool, 'func': new_character_async})
                 elif tool_name == 'ADD_ITEM_TO_INVENTORY':
                     image_generation_tools.append({'tool': tool, 'func': new_item_async})
+                elif tool_name == 'EDIT_POI':
+                    image_generation_tools.append({'tool': tool, 'func': edit_poi_async})
                 
             else:
                 other_tools.append(tool)
@@ -536,6 +542,8 @@ def dispatch_tool(tool):
             new_character(tool)
         elif tool['name'].upper() == 'LOAD_PREVIOUS_POI':
             load_poi(tool)
+        elif tool['name'].upper() == 'EDIT_POI':
+            edit_poi(tool)
         elif tool['name'].upper() == 'TOGGLE_FOLLOW':
             toggle_follow(tool)
         elif tool['name'].upper() == 'CHANGE_MONEY':
@@ -622,7 +630,7 @@ def new_poi(tool):
         poi_coordinates = f"{x},{y}"
         
         # Generate POI prompt for image generation
-        full_prompt = f"{poi_name}, {st.session_state.player['LearningLanguage']} isometric point of interest, detailed map tile, pastel colour pallette, soft beautiful pixel art, rpg pixel art game, Hyperrealism, moody, cinematic, gritty, {poi_prompt}, 2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel. detailed and varied, asymmetrical."
+        full_prompt = f"{poi_name}, {st.session_state.player['LearningLanguage']} isometric point of interest, detailed map tile, pastel colour pallette, soft beautiful pixel art, rpg pixel art game, Hyperrealism, moody, people, cinematic, gritty, {poi_prompt}, 2d orthographic side-on view. pixelart sidescroller background game art. isometric. white background. slice of land, land parcel. detailed and varied, asymmetrical."
         
         Image = fal_poi(full_prompt)
         
@@ -881,6 +889,42 @@ async def new_poi_async(tool):
         
         return final_image
 
+async def edit_poi_async(tool):
+    print('editing poi: ', tool)
+    if len(tool['variables']) >= 2:
+        poi_name = tool['variables'][0]
+        poi_prompt = tool['variables'][1]
+        lookingforpoi = None
+        print('vars good')
+        for poi in st.session_state.PoiList:
+            if poi['Name'].upper() == poi_name.upper():
+                lookingforpoi = poi
+                print('poi found')
+                break
+        if lookingforpoi is None:
+            print('poi not found, using current POI')
+            lookingforpoi = st.session_state.POI
+        
+        print('editing poi: ', lookingforpoi['Image'], poi_prompt)
+        Image = await fal_edit_POI_async(lookingforpoi['Image'], poi_prompt)
+        
+         # Wait for POI image first, then remove background
+        final_image = await fal_removebg_async(Image)
+        
+        # Apply image corrections
+        ImageColorCorrect(final_image)
+        st.session_state.POI['Image'] = Image
+
+        #edit entry in poilist
+        for poi in st.session_state.PoiList:
+            if poi['Name'].upper() == lookingforpoi['Name'].upper():
+                poi['Image'] = final_image
+                break
+
+
+        #lookingforpoi['Prompt'] = poi_prompt
+        #st.session_state.NotiBuffer.append([f"🖼️ POI image edited: {poi_name}", "click.mp3"])
+
 async def new_character_async(tool):
     """Async version of new_character that generates character image"""
     if len(tool['variables']) >= 3:
@@ -899,7 +943,10 @@ async def new_character_async(tool):
         # Generate character image
         character_prompt = f'PixArFK style, portrait of {character_name}, {character_description}, detailed background, game character icon, SOFT DREAMY pixel art, shoulders-up shot, 3/4 view, jrpg style character icon of a {st.session_state.player["LearningLanguage"]} person'
         
-        placeholder_image = 'https://v3.fal.media/files/tiger/eCsW8xKiT7ynxw1mVR6ba.jpeg'
+        #create list and choose random
+        placeholders = ['https://v3.fal.media/files/tiger/eCsW8xKiT7ynxw1mVR6ba.jpeg', 'https://v3.fal.media/files/kangaroo/6KAJlBAqqsmwiz5hhrFLU.jpeg', 'https://v3.fal.media/files/elephant/LpHpmrsQlJ91iGYXjyOuJ.jpeg', 'https://v3.fal.media/files/rabbit/vvo0rgYIZfXk0CixbnzE2.jpeg', 'https://v3.fal.media/files/rabbit/aunKTDfzCt1NmSD4uj9rx.jpeg', 'https://v3.fal.media/files/kangaroo/HV6ueJufuJG5bEtMSJZGs.jpeg']
+        placeholder_image = random.choice(placeholders)
+        
         character_image = await fal_iconimg2img_async(character_prompt, placeholder_image)
         
         # Add character to session state
@@ -1292,7 +1339,7 @@ async def fal_iconimg2img_async(prompt: str, image_url: str):
                 "num_inference_steps": 30,
                 "guidance_scale": 3,
                 "num_images": 1,
-                "strength": 1,
+                "strength": 0.99,
                 "enable_safety_checker": True,
                 "output_format": "jpeg",
                 "image_size": {
@@ -1338,13 +1385,33 @@ async def fal_instantChar_async(image_url: str, prompt_action: str, prompt: str)
         print(f"Error in fal_instantChar_async: {e}")
         return image_url  # Return original if generation fails
 
+async def fal_edit_POI_async(image_url: str, prompt):
+    """Async edit a poi image using nano banana"""
+    try:
+        # First generate the instant character
+        handler1 = await fal_client.submit_async(
+            "fal-ai/nano-banana/edit",
+            arguments={
+                "prompt": prompt,
+                "image_urls": [image_url]
+            },
+        )
+        result1 = await handler1.get()
+        print('result1: ', result1)
+        
+        print(f"edited POI image: {result1['images'][0]['url']}")
+        return result1['images'][0]['url']
+    except Exception as e:
+        print(f"Error in fal_edit_POI: {e}")
+        return image_url  # Return original if generation fails
+
 
 def text_to_speech_bytes(text: str, voice_id: str="WAixHs5LYSwPVDJxQgN7") -> bytes:
     chunks = elevenlabs.text_to_speech.convert(
         voice_id=voice_id,
         output_format="mp3_22050_32",
         text=text,
-        model_id="eleven_turbo_v2_5",
+        model_id="eleven_v3",
         voice_settings=VoiceSettings(
             stability=0.0,
             similarity_boost=1.0,
@@ -1355,6 +1422,15 @@ def text_to_speech_bytes(text: str, voice_id: str="WAixHs5LYSwPVDJxQgN7") -> byt
     )
     return b"".join(chunks)  # <-- collect all chunks
 
+def voicedesign(Description: str, text: str) -> bytes:
+    voice = elevenlabs.text_to_voice.design(
+        voice_description=Description,
+        text = text,
+    )
+    print('voice: ', voice)
+    voice_id = voice.previews[0].generated_voice_id
+    sp = text_to_speech_bytes(text = text, voice_id=voice_id)
+    return sp
 
 def AddUserContext():
 
@@ -1379,6 +1455,11 @@ def AddUserContext():
         userContext += "- Inventory Empty -\n"
     
     userContext += f"*Current POI:*\n{st.session_state.POI['Name']}\n"
+
+    userContext +=f"Characters at this POI:\n"
+    for character in st.session_state.characters:
+        if character['POI'] == st.session_state.POI['Name']:
+            userContext += f"{character['name']}\n"
 
     userContext += f"*Loadable POI List:*\n"
     if st.session_state.PoiList:
@@ -1674,9 +1755,9 @@ def KillCharacter(tool):
             st.rerun()
         st.container(border=False, height = 5)
 
-def AI(conversation):
+def AI(conversation, model = 'gpt-5-mini'):
     AddUserContext()
-    response = get_response(conversation)       
+    response = get_response(conversation, model)       
     character_to_chat = None
     tools = check_for_tools(response)
     if tools:
@@ -1689,10 +1770,10 @@ def AI(conversation):
     return response, character_to_chat
 
  
-def get_response(conversation):
+def get_response(conversation, model):
     messages = [{"role": "system", "content": st.session_state.SystemPrompt}] + conversation
     response = client.chat.completions.create(
-        model="gpt-5-mini",
+        model=model,
         messages=messages
     )
     #if response code good
@@ -1714,7 +1795,7 @@ def Fakestream(text):
         st.session_state.lasttext = text
         for char in text:
             rand = random.randint(1, 5)
-            time.sleep(rand/100)
+            time.sleep(rand/400)
             yield char
         
 def speechtotext(recording, Character):
@@ -1723,12 +1804,16 @@ def speechtotext(recording, Character):
     client = OpenAI(api_key=openai_api_key)
     audio_file= recording
 
+    TranscriptionPrompt = f"The person is speaking in {st.session_state.player['LearningLanguage']}, or possibly {st.session_state.player['NativeLanguage']}. Transcribe exactly what they say without corrections. The person is speaking to {Character}. Other characters in the scene they may mention are: {st.session_state.characters}"
+
     transcription = client.audio.transcriptions.create(
         model="gpt-4o-transcribe", 
         file=audio_file,
-        prompt= f"The person is speaking in {st.session_state.player['LearningLanguage']}, or possibly {st.session_state.player['NativeLanguage']}. Transcribe exactly what they say without corrections. The person is speaking to {Character}."
+        prompt= TranscriptionPrompt
+        
         
     )
+    print('prompt sent to transcribe: ', TranscriptionPrompt)
     if transcription.text:
         ChangeEggs(-1)
         print(transcription.text)
@@ -1757,6 +1842,7 @@ def character_chat(Character):
             # Close the dialog by returning, as st.dialog functions close on return.
             return
 
+
     _, center, __ = st.columns([1, 1, 1])
     with center:
         # Use .get() for safer access to dictionary keys
@@ -1766,24 +1852,23 @@ def character_chat(Character):
             Character['reactionImages'] = [Character['image']]
         if 'reactionIndex' not in Character:
             Character['reactionIndex'] = 0
+        
+        follow = ''
+        if Character.get('is_following', False):
+            follow = '👥 '
 
         if char_image_url:
             characterImageEmpty = st.empty()
             with characterImageEmpty:
-                st.image(Character['reactionImages'][Character['reactionIndex']], caption=char_name, use_container_width=True)
+                st.image(Character['reactionImages'][Character['reactionIndex']], caption=f'{follow}{char_name}', use_container_width=True)
         else:
             # Fallback if image is missing or None
-            st.markdown(f"🖼️")
+            st.image('Fallback.png', use_container_width=True, caption = 'Character not found!')
             # Consider adding a placeholder image:
             # st.image("path/to/your/placeholder.png", caption=char_name, use_container_width=True)
     
-    if Character.get('is_following', False):
-        with center:
-            st.markdown(f"<p style='text-align: center; color: grey; margin-top: -18px; font-size: 14px;'>👥</p>", unsafe_allow_html=True)
+
     
-    with st.container(border=False, height = 1):
-        st.container(border=False, height = 50)
-        Speaker = st.empty()
 
 
     # Ensure 'convoHistory' key exists in the Character dictionary, initializing if necessary.
@@ -1804,14 +1889,15 @@ def character_chat(Character):
                 ChatWindow = st.container(border=True, height = 280)
             with ChatWindow: # Original container for scrolling
                 for message_entry in Character.get('convoHistory', []): # Use .get for safety
-                    if isinstance(message_entry, dict) and 'role' in message_entry and 'content' in message_entry:
+                    if isinstance(message_entry, dict) and 'role' in message_entry and 'content' in message_entry:                        
                         
+                        #### AI MESSAGES ####
                         if message_entry['role'] == 'assistant':
                             MessageCol, TranslationCol = st.columns([10,1])
                             with MessageCol:
-                                mess = st.chat_message(message_entry['role'], avatar='💬')#
+                                mess = st.chat_message(message_entry['role'], avatar='💬')
                                 mess.write(message_entry['content'])
-                                mess.markdown(f"<p style='text-align: left; color: grey; margin-top: -18px; font-size: 14px;'>{message_entry['phonetic']}", unsafe_allow_html=True )
+                                mess.markdown(f"<p style='text-align: left; color: grey; margin-top: -18px; font-size: 14px;'>{message_entry['phonetic']}", unsafe_allow_html=True)
                             with TranslationCol:
                                 st.container(border=False, height = 15)
                                 if 'translation' in message_entry and message_entry['translation']:
@@ -1842,7 +1928,7 @@ def character_chat(Character):
                                   
 
                                     
-                        else:
+                        else: #### Player Messages ###
                             MessageCol, TranslationCol = st.columns([10,1])
                             with MessageCol:
                                 mess = st.chat_message(message_entry['role'], avatar=st.session_state.player['Avatar'])
@@ -1852,18 +1938,20 @@ def character_chat(Character):
                                 if 'translation' in message_entry:
                                     HelpText = message_entry['translation']
                                 else:
-                                    HelpText = SpotIntelegence(f"Output solely the corrected version of the users text in {st.session_state.player['LearningLanguage']}. Highlight where the corrections are with ** marks. example: User: Ich fahre ins Auto gehen\nYou: Ich fahre **mit dem Auto**.\nIf there is nothing to correct, respond exactly with ✔", message_entry['content'], "gpt-4o-mini")
+                                    HelpText = SpotIntelegence(f"Output solely the corrected version of the users text in {st.session_state.player['LearningLanguage']}. Highlight where the corrections are with ** marks. example: User: Ich fahre ins Auto gehen\nYou: Ich fahre **mit dem Auto**.\nIf there is nothing to correct, respond exactly with just a checkmark ✔", message_entry['content'], "gpt-4o-mini")
                                     message_entry['translation'] = HelpText
-                                    if HelpText.upper() != '✔':
-                                        AddXP(int(len(message_entry['content'])/10))
+                                    if '✔' in HelpText:
+                                        AddXP(int(len(message_entry['content'])/5)+1)
                                 
                                 st.container(border=False, height = 1)
                                 if HelpText.upper() == '✔':
                                     #empty placeholder
-                                    st.markdown(f"<p style='text-align: left; color: #FFFFFF; margin-top: -10px; margin-left: -40px; font-size: 16px;'> </p>", unsafe_allow_html=True)
+                                    # Encouragements = ['Perfect!', 'Nice one', 'Good job', 'Excellent!', 'Fantastic!', 'Brilliant!', 'Amazing!', 'Lovely stuff', 'wonderful!', 'terrific!', 'magnificent!', 'outstanding!', 'superb!', 'magnificent!', 'terrific!', 'wonderful!', 'fantastic!', 'excellent!', 'good job!', 'well done!', 'perfect!']
+                                    # st.markdown(f"<p style='text-align: left; color: #FFFFFF; margin-top: -10px; margin-left: -40px; font-size: 16px;'>💎</p>", unsafe_allow_html=True, help = Encouragements[random.randint(0, len(Encouragements)-1)])
+                                    st.markdown(f"<p style='text-align: left; color: grey; margin-top: 4px; margin-left: 0px; font-size: 13px;'>{int(len(message_entry['content'])/5)+1} xp</p>", unsafe_allow_html=True)
                                 else:
                                     st.markdown(f"<p style='text-align: center; color: grey; margin-top: 50px; font-size: -1px;'> </p>", unsafe_allow_html=True, help = HelpText)
-                                    st.markdown(f"<p style='text-align: center; color: orange; margin-top: -75px; margin-left: -90px; font-size: 25px;'>•</p>", unsafe_allow_html=True)
+                                    #st.markdown(f"<p style='text-align: center; color: orange; margin-top: -75px; margin-left: -90px; font-size: 25px;'>•</p>", unsafe_allow_html=True)
                                           
              
                     else:
@@ -1877,6 +1965,9 @@ def character_chat(Character):
     # Chat input field
     #user_input = st.chat_input('Your message...', key=f'chat_input_{chat_input_key_suffix}', disabled=st.session_state.isLoading)
     progress_bar = st.empty()
+        # with st.container(border=False, height = 1):
+        # st.container(border=False, height = 50)
+    Speaker = st.empty()
 
 ##############
     UserAudioInput = st.audio_input(f"", key=f'audio_input_{chat_input_key_suffix}')
@@ -1911,9 +2002,10 @@ def character_chat(Character):
         
         progress_bar.progress(0.5)
 
-        while toolsnotfound and retrys < 5:
+        while toolsnotfound and retrys < 2:
             retrys += 1
-            ai_response_full, _ = AI(st.session_state.Conversation)
+            ai_response_full, _ = AI(st.session_state.Conversation, 'gpt-4o-mini')
+            progress_bar.progress(0.8)
             tools = check_for_tools(ai_response_full)
             if tools:
                 for tool in tools:
@@ -1967,9 +2059,13 @@ def character_chat(Character):
                         charm.append("💠")
                     if tool['name'].upper() == 'CHANGE_MONEY':
                         charm.append("💸")
-                    if tool['name'].upper() == 'TOGGLE_FOLLOW':
-                        if tool['variables'][0] != Character.get('is_following', False):
+                    if tool['name'].upper() == 'SET_FOLLOW':
+                        if 'TRUE' in tool['variables'][0].upper():
                             charm.append("👥")
+                        elif 'FALSE' in tool['variables'][0].upper():
+                            charm.append("👋")
+                        else:
+                            print(f'Invalid follow state: {tool['variables'][0]}')
                     if tool['name'].upper() == 'ADD_ITEM_TO_INVENTORY':
                         charm.append("🎒")
                     if tool['name'].upper() == 'REMOVE_ITEM_FROM_INVENTORY':
@@ -1990,7 +2086,7 @@ def character_chat(Character):
             # if retrys >= 8:
             #     st.session_state.Conversation.append({"role": "assistant", "content": f"{Character.get('name', 'an unnamed character')} has died"})
             #     st.rerun()
-        progress_bar.progress(0.9)
+        progress_bar.progress(0.95)
 
         # 5. Add AI response to history
         message_to_append = {"role": "assistant", "content": ai_response}
@@ -2000,14 +2096,16 @@ def character_chat(Character):
             message_to_append['phonetic'] = phonetic
         if charm:
             message_to_append['charm'] = charm
-        Character['convoHistory'].append(message_to_append)
 
         
+        #message_to_append['audio'] = mp3_bytes
 
+        Character['convoHistory'].append(message_to_append)
+        mp3_bytes = text_to_speech_bytes(str(ai_response), Character.get('voice_id', '6CS8keYmkwxkspesdyA7'))
         with Speaker:
             with st.container(border=False):
-                mp3_bytes = text_to_speech_bytes(str(ai_response), Character.get('voice_id', '6CS8keYmkwxkspesdyA7'))
                 st.audio(mp3_bytes, format="audio/mp3", autoplay=True)
+
         # 6. Re-render to show AI's response
         
         render_current_messages()
@@ -2159,7 +2257,9 @@ def Tutor_chat():
 
                                         st.subheader(f'{translation}', divider=color)
                                     with headercols[2]:
-                                        if st.button('📌', key = f'pin{text}', use_container_width=True, type="tertiary"):
+                                        
+
+                                        if st.button('', icon = ':material/bookmark:', key = f'pin{text}{random.randint(1, 1000000)}', use_container_width=True, type="tertiary"):
                                             if "pinnedVocab" not in st.session_state:
                                                 st.session_state.pinnedVocab = []
                                             if st.session_state.pinnedVocab == None:
@@ -2176,12 +2276,12 @@ def Tutor_chat():
                                             
 
 
-                                    #st.container(border=False, height=4)
-                                    if st.button(f'**{text}**', key=text, use_container_width=False, type="tertiary"):
+                                    st.container(border=False, height=1)
+                                    if st.button(f'**{text}**', key=text+str(random.randint(1, 10000)), use_container_width=True, type="tertiary"):
                                         tutorReadOut(text, PachoVoice)
                                         
-                                    st.markdown(f"<p style='text-align: left; color: grey; margin-top: -18px; font-size: 13px; padding-left: 0px;'>{phonetic}</p>", unsafe_allow_html=True)
-                                    #st.container(border=False, height=10)
+                                    st.markdown(f"<p style='text-align: center; color: grey; margin-top: -18px; font-size: 13px; padding-left: 0px;'>{phonetic}</p>", unsafe_allow_html=True)
+                                    st.container(border=False, height=1)
 
                     
 
@@ -2221,7 +2321,7 @@ def Tutor_chat():
                 st.session_state.TutorHistory.append({"role": "assistant", "content": response})
                 
                 with st.empty():
-                    st.write_stream(Fakestream(FormatToolCalls(response, PachoVoice)[0]))
+                    st.write_stream(Fakestream(FormatToolCalls(response[:20], PachoVoice)[0]))
                     st.empty()
                     time.sleep(0.1)                    
                     renderMessage({"role": "assistant", "content": response})
@@ -2245,7 +2345,7 @@ def Tutor_chat():
             if st.button(prompt, key = "QR1", use_container_width=True, type="secondary"):
                 Run(prompt)
         with quickresponsesA[2]:
-            prompt = "More!"
+            prompt = "Give feedback"
             if st.button(prompt, key = "QR2", use_container_width=True, type="secondary"):
                 Run(prompt)
         
@@ -2781,6 +2881,7 @@ def Mission_box():
                 AI(st.session_state.Conversation)
 
 
+
                 # if not st.session_state.Conversation[-3]['content'].startswith("[MissionRefresh]"):
                 #     st.session_state.Conversation.append({"role": "assistant", "content": "[MissionRefresh]\nThe player has clicked the refresh missions button, indicating they believe they have completed one or more missions. After this usercontext I will call the complete mission tool on completed tasks"})
                 #     AI(st.session_state.Conversation)
@@ -2818,7 +2919,7 @@ def Mission_box():
                                     }
                                 """
                                 with stylable_container(css_styles=cssstyles, key=f"MissionChip{mission['mission']}{uuid.uuid1()}"):
-                                    st.markdown(f"<p style='text-align: left; color: grey; margin-top: 14px; font-size: 15px; padding-left: 20px; padding-right: 20px; color: #25274B;'>{mission["mission"]}</p>", unsafe_allow_html=True)
+                                    st.markdown(f"<p style='text-align: left; color: grey; margin-top: 14px; font-size: 15px; padding-left: 20px; padding-right: 20px; color: #25274B;'>💠 {mission["mission"]}</p>", unsafe_allow_html=True)
                                     st.markdown(f"<p style='text-align: left; color: grey; margin-top: 0px; font-size: 13px;padding-left: 20px;'>{mission["Reward"]}</p>", unsafe_allow_html=True)
                                 
                                 
@@ -3550,7 +3651,7 @@ def Onboarding(id = None):
                     "EggsReset": 1,
                     "ProfilePicture": 1,
                     "XP": 0,
-                    "Money": 2.50,
+                    "Money": 3.50,
                     "Volume": 50,
                     "IsSubscribed": False,
                     "Avatar": "🐱"
@@ -3571,7 +3672,7 @@ def Onboarding(id = None):
                     "EggsReset": 1,
                     "ProfilePicture": 1,
                     "XP": 0,
-                    "Money": 2.50,
+                    "Money": 3.50,
                     "Volume": 50,
                     "IsSubscribed": False
 
@@ -3624,8 +3725,7 @@ def OutOfEggs():
 
 @st.dialog(" ")
 def ReturningUser():
-    
-    st.container(border=False, height=50)
+    st.container(border=False, height=125)
     logocol = st.columns([1, 2, 1])
     with logocol[1]:
         st.image("static/Logos/Logo_Med.png", use_container_width=True)
@@ -3633,7 +3733,7 @@ def ReturningUser():
 
     st.markdown(f"<p style='text-align: center; color: grey; margin-top: -1px; font-size: 14px;'>Press spacebar to begin</p>", unsafe_allow_html=True)
     
-    st.container(border=False, height=100)
+    st.container(border=False, height=120)
     with st.container(border=False):
         RenderGoogleChipMinimal()
     #st.json(st.session_state.player)
@@ -3681,7 +3781,7 @@ if st.user.is_logged_in == True or st.session_state.Guest == True:
                 'IsSubscribed': False,
                 'Difficulty': "Beginner",
                 'XP': 0,
-                'Money': 2.50,
+                'Money': 3.50,
                 'Volume': 50,
                 'GameTheme': "Set in mordern day France, starting in downtown Paris. Start at a random french shop where all is well, second location - introduce Baal an alien character, move 3 introduce the 'men-in black' to remove Baal, move 4 the aliens invade paris, shooting lazers and abduction people. move 5 onwards let the player lead the way. YOU MUST STICK TO THIS SCRIPT"
             }
@@ -3714,7 +3814,7 @@ if st.user.is_logged_in == True or st.session_state.Guest == True:
                     'IsSubscribed': True if row['IsSubscribed'] == True else False,
                     'Difficulty': str(row['Difficulty']),
                     'XP': int(row['XP']) if 'XP' in row and row['XP'] is not None else 0,
-                    'Money': float(row['Money']) if 'Money' in row and row['Money'] is not None else 2.50,
+                    'Money': float(row['Money']) if 'Money' in row and row['Money'] is not None else 3.50,
                     'Volume': int(row['Volume']) if 'Volume' in row and row['Volume'] is not None else 50,
                     'GameTheme': str(row['GameTheme']) if 'GameTheme' in row and row['GameTheme'] is not None else ''
                 }
@@ -3738,7 +3838,7 @@ if st.user.is_logged_in == True or st.session_state.Guest == True:
                 "IsSubscribed": False,
                 "Difficulty": "Beginner",
                 "XP": 0,
-                "Money": 2.50,
+                "Money": 3.50,
                 "Volume": 50,
                 "GameTheme": ""
             })
@@ -3762,7 +3862,7 @@ if st.user.is_logged_in == True or st.session_state.Guest == True:
                     'IsSubscribed': True if row['IsSubscribed'] == True else False,
                     'Difficulty': str(row['Difficulty']),
                     'XP': int(row['XP']) if 'XP' in row and row['XP'] is not None else 0,
-                    'Money': float(row['Money']) if 'Money' in row and row['Money'] is not None else 2.50,
+                    'Money': float(row['Money']) if 'Money' in row and row['Money'] is not None else 3.50,
                     'Volume': int(row['Volume']) if 'Volume' in row and row['Volume'] is not None else 50,
                     'GameTheme': str(row['GameTheme']) if 'GameTheme' in row and row['GameTheme'] is not None else ''
                     }
