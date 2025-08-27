@@ -341,7 +341,7 @@ def Main():
     #     st.rerun() # Rerun to reflect the new isLoading state and enable UI
 
     SoundPlayer()
-    debug()
+    #debug()
 
 
 async def execute_image_generation_tasks(image_tasks):
@@ -1436,39 +1436,40 @@ def AddUserContext():
 
     #loop through delete old
     for message in st.session_state.Conversation:
-        if message['content'].startswith('**Current User Context**'):
+        if message['content'].startswith('### Current User Context'):
             st.session_state.Conversation.remove(message)
 
-    userContext = "**Current User Context**\n**PlayerData:**\n "
+    userContext = "### Current User Context\n## PlayerData:\n "
     userContext += f"Name: {st.session_state.player['Name']}\n"
     userContext += f"Gender: {st.session_state.player['Gender']}\n"
     userContext += f"Native Language: {st.session_state.player['NativeLanguage']}\n"
     userContext += f"Learning Language: {st.session_state.player['LearningLanguage']}\n"
     userContext += f"The player now describes themselves as '{st.session_state.player['Difficulty']}' at {st.session_state.player['LearningLanguage']}, talk at this level.\n"
 
-    userContext += "\n**Player Inventory:**\n"
-    userContext += f"Money: {Currencylookup.get(st.session_state.player.get('LearningLanguage', 'English'), '€')}{st.session_state.player.get('Money', 0):.2f}\n"
+    userContext += "\n## Player Inventory:\n"
     if st.session_state.inventory:
         for item in st.session_state.inventory:
-            userContext += f"*{item['name']}*: {item['description']}\n"
+            userContext += f"{item['name']}: {item['description']}\n"
     else:
         userContext += "- Inventory Empty -\n"
     
-    userContext += f"*Current POI:*\n{st.session_state.POI['Name']}\n"
+    userContext += f"## Money:\n{Currencylookup.get(st.session_state.player.get('LearningLanguage', 'English'), '€')}{st.session_state.player.get('Money', 0):.2f}\n"
 
-    userContext +=f"Characters at this POI:\n"
+    userContext += f"## Current POI:\n{st.session_state.POI['Name']}\n"
+
+    userContext +=f"## Characters at this POI:\n"
     for character in st.session_state.characters:
         if character['POI'] == st.session_state.POI['Name']:
             userContext += f"{character['name']}\n"
 
-    userContext += f"*Loadable POI List:*\n"
+    userContext += f"## Loadable POI List:\n"
     if st.session_state.PoiList:
         for poi in st.session_state.PoiList:
             userContext += f"{poi['Name']}\n"
     else:
         userContext += "- Empty -\n"
 
-    userContext += f"*Missions:*\n"
+    userContext += f"## Missions:\n"
     idscount=-1
     MissionsString = ""
     for mission in st.session_state.missionList:
@@ -1755,6 +1756,7 @@ def KillCharacter(tool):
             st.rerun()
         st.container(border=False, height = 5)
 
+#gpt-5-mini
 def AI(conversation, model = 'gpt-5-mini'):
     AddUserContext()
     response = get_response(conversation, model)       
